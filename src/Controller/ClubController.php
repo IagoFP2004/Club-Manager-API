@@ -13,7 +13,7 @@ class ClubController extends AbstractController
     #[Route('/clubs', name: 'club_list', methods: ['GET'])]//Ruta para listar clubs
     public function listClubs(Connection $connection): Response//Metodo para listar clubs
     {
-        $sql = "SELECT id_club, nombre, fundacion, ciudad, estadio, entrenador, presupuesto FROM club";//Consulta para listar clubs
+        $sql = "SELECT id_club, nombre, fundacion, ciudad, estadio, presupuesto FROM club";//Consulta para listar clubs
         $clubs = $connection->fetchAllAssociative($sql);//Ejecuta la consulta y devuelve los resultados
         //Devuelve los resultados en formato JSON
         return $this->json([
@@ -32,11 +32,10 @@ class ClubController extends AbstractController
         $fundacion = $request->request->get('fundacion');
         $ciudad = $request->request->get('ciudad');
         $estadio = $request->request->get('estadio');
-        $entrenador = $request->request->get('entrenador');
         $presupuesto = $request->request->get('presupuesto');
 
         // Verificar que todos los campos estén presentes
-        if (empty($id_club) || empty($nombre) || empty($fundacion) || empty($ciudad) || empty($estadio) || empty($entrenador) || ($presupuesto === null || $presupuesto === '')) {
+        if (empty($id_club) || empty($nombre) || empty($fundacion) || empty($ciudad) || empty($estadio) || ($presupuesto === null || $presupuesto === '')) {
             return $this->json(['error' => 'Todos los campos son requeridos'], 400);
         }
 
@@ -72,27 +71,19 @@ class ClubController extends AbstractController
            $errores['estadio'] = 'El estadio ya existe';
         }
 
-        // Verificar si el entrenador ya existe
-        $sql = "SELECT entrenador FROM club WHERE entrenador = :entrenador";
-        $existingClubEntrenador = $connection->fetchAssociative($sql, ['entrenador' => $entrenador]);
-        
-        if ($existingClubEntrenador) {
-            $errores['entrenador'] = 'El entrenador ya existe';
-        }
 
         if (!empty($errores)) {
             return $this->json(['error' => $errores], 400);
         }
 
-        $sql = "INSERT INTO club (id_club, nombre, fundacion, ciudad, estadio, entrenador, presupuesto) 
-        VALUES (:id_club, :nombre, :fundacion, :ciudad, :estadio, :entrenador, :presupuesto)";//Consulta para insertar clubs
+        $sql = "INSERT INTO club (id_club, nombre, fundacion, ciudad, estadio, presupuesto) 
+        VALUES (:id_club, :nombre, :fundacion, :ciudad, :estadio, :presupuesto)";//Consulta para insertar clubs
         $connection->executeStatement($sql, [//Ejecuta la consulta y devuelve los resultados
             'id_club' => $request->request->get('id_club'),
             'nombre' => $request->request->get('nombre'),
             'fundacion' => $request->request->get('fundacion'),
             'ciudad' => $request->request->get('ciudad'),
             'estadio' => $request->request->get('estadio'),
-            'entrenador' => $request->request->get('entrenador'),
             'presupuesto' => $request->request->get('presupuesto')
         ]);
         //Devuelve los resultados en formato JSON
@@ -123,10 +114,6 @@ class ClubController extends AbstractController
         if (isset($jsonData['estadio'])) {
             $updateFields[] = 'estadio = :estadio';
             $data['estadio'] = $jsonData['estadio'];
-        }
-        if (isset($jsonData['entrenador'])) {
-            $updateFields[] = 'entrenador = :entrenador';
-            $data['entrenador'] = $jsonData['entrenador'];
         }
         if (isset($jsonData['presupuesto'])) {
             $updateFields[] = 'presupuesto = :presupuesto';

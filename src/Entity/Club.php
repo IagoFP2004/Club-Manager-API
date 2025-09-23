@@ -28,8 +28,6 @@ class Club
     #[ORM\Column(length: 255)]
     private ?string $estadio = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
-    private ?int $entrenador = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 15, scale: 2)]
     private ?string $presupuesto = null;
@@ -37,9 +35,13 @@ class Club
     #[ORM\OneToMany(mappedBy: 'club', targetEntity: Player::class)]
     private Collection $players;
 
+    #[ORM\OneToMany(mappedBy: 'club', targetEntity: Coach::class)]
+    private Collection $coaches;
+
     public function __construct()
     {
         $this->players = new ArrayCollection();
+        $this->coaches = new ArrayCollection();
     }
 
     public function getIdClub(): ?string
@@ -102,17 +104,6 @@ class Club
         return $this;
     }
 
-    public function getEntrenador(): ?int
-    {
-        return $this->entrenador;
-    }
-
-    public function setEntrenador(int $entrenador): static
-    {
-        $this->entrenador = $entrenador;
-
-        return $this;
-    }
 
     public function getPresupuesto(): ?string
     {
@@ -149,6 +140,35 @@ class Club
         if ($this->players->removeElement($player)) {
             if ($player->getClub() === $this) {
                 $player->setClub(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Coach>
+     */
+    public function getCoaches(): Collection
+    {
+        return $this->coaches;
+    }
+
+    public function addCoach(Coach $coach): static
+    {
+        if (!$this->coaches->contains($coach)) {
+            $this->coaches->add($coach);
+            $coach->setClub($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCoach(Coach $coach): static
+    {
+        if ($this->coaches->removeElement($coach)) {
+            if ($coach->getClub() === $this) {
+                $coach->setClub(null);
             }
         }
 
