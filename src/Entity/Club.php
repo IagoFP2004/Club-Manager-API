@@ -31,6 +31,9 @@ class Club
     #[ORM\Column(type: Types::INTEGER)]
     private ?int $entrenador = null;
 
+    #[ORM\Column(type: Types::DECIMAL, precision: 15, scale: 2)]
+    private ?string $presupuesto = null;
+
     #[ORM\OneToMany(mappedBy: 'club', targetEntity: Player::class)]
     private Collection $players;
 
@@ -107,6 +110,18 @@ class Club
     public function setEntrenador(int $entrenador): static
     {
         $this->entrenador = $entrenador;
+
+        return $this;
+    }
+
+    public function getPresupuesto(): ?string
+    {
+        return $this->presupuesto;
+    }
+
+    public function setPresupuesto(string $presupuesto): static
+    {
+        $this->presupuesto = $presupuesto;
 
         return $this;
     }
