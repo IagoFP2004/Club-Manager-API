@@ -36,10 +36,18 @@ class ClubController extends AbstractController
         $presupuesto = $request->request->get('presupuesto');
 
         // Verificar que todos los campos estén presentes
-        if (empty($id_club) || empty($nombre) || empty($fundacion) || empty($ciudad) || empty($estadio) || empty($entrenador) || empty($presupuesto)) {
+        if (empty($id_club) || empty($nombre) || empty($fundacion) || empty($ciudad) || empty($estadio) || empty($entrenador) || ($presupuesto === null || $presupuesto === '')) {
             return $this->json(['error' => 'Todos los campos son requeridos'], 400);
         }
 
+        // Validar presupuesto
+        if (!is_numeric($presupuesto)) {
+            $errores['presupuesto'] = "El presupuesto debe ser un número válido";
+        } elseif ($presupuesto == 0) {
+            $errores['presupuesto'] = "El presupuesto del club no puede ser 0";
+        } elseif ($presupuesto < 0) {
+            $errores['presupuesto'] = "El presupuesto no puede ser negativo";
+        }
         // Verificar si el club ya existe
         $sql = "SELECT id_club FROM club WHERE id_club = :id_club";
         $existingClub = $connection->fetchAssociative($sql, ['id_club' => $id_club]);
