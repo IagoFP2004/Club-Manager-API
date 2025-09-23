@@ -6,15 +6,15 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
-use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
+use App\Entity\Club;
 
 class ClubController extends AbstractController
 {
     #[Route('/clubs', name: 'club_list', methods: ['GET'])]//Ruta para listar clubs
-    public function listClubs(Connection $connection): Response//Metodo para listar clubs
+    public function listClubs(EntityManagerInterface $entityManager): Response//Metodo para listar clubs
     {
-        $sql = "SELECT id_club, nombre, fundacion, ciudad, estadio, presupuesto FROM club";//Consulta para listar clubs
-        $clubs = $connection->fetchAllAssociative($sql);//Ejecuta la consulta y devuelve los resultados
+        $clubs = $entityManager->getRepository(Club::class)->findAll();//Obtiene todos los clubs
         //Devuelve los resultados en formato JSON
         return $this->json([
             'clubs' => $clubs
@@ -22,9 +22,8 @@ class ClubController extends AbstractController
     }
 
     #[Route('/clubs', name: 'club_insert', methods: ['POST'])]//Ruta para insertar clubs
-    public function createClub(Connection $connection, Request $request): Response//Metodo para insertar clubs
+    public function createClub(EntityManagerInterface $entityManager, Request $request): Response//Metodo para insertar clubs
     {
-
         $errores = [];
         // Obtener todos los campos
         $id_club = $request->request->get('id_club');
@@ -47,45 +46,41 @@ class ClubController extends AbstractController
         } elseif ($presupuesto < 0) {
             $errores['presupuesto'] = "El presupuesto no puede ser negativo";
         }
+
         // Verificar si el club ya existe
-        $sql = "SELECT id_club FROM club WHERE id_club = :id_club";
-        $existingClub = $connection->fetchAssociative($sql, ['id_club' => $id_club]);
-        
+        $existingClub = $entityManager->getRepository(Club::class)->find($id_club);
         if ($existingClub) {
-           $errores['id_club'] = 'El club ya existe';
+            $errores['id_club'] = 'El club ya existe';
         }
 
         // Verificar si el nombre ya existe
-        $sql = "SELECT nombre FROM club WHERE nombre = :nombre";
-        $existingClubName = $connection->fetchAssociative($sql, ['nombre' => $nombre]);
-        
+        $existingClubName = $entityManager->getRepository(Club::class)->findOneBy(['nombre' => $nombre]);
         if ($existingClubName) {
             $errores['nombre'] = 'El nombre del club ya existe';
         }
 
         // Verificar si el estadio ya existe
-        $sql = "SELECT estadio FROM club WHERE estadio = :estadio";
-        $existingClubEstadio = $connection->fetchAssociative($sql, ['estadio' => $estadio]);
-        
+        $existingClubEstadio = $entityManager->getRepository(Club::class)->findOneBy(['estadio' => $estadio]);
         if ($existingClubEstadio) {
-           $errores['estadio'] = 'El estadio ya existe';
+            $errores['estadio'] = 'El estadio ya existe';
         }
-
 
         if (!empty($errores)) {
             return $this->json(['error' => $errores], 400);
         }
 
-        $sql = "INSERT INTO club (id_club, nombre, fundacion, ciudad, estadio, presupuesto) 
-        VALUES (:id_club, :nombre, :fundacion, :ciudad, :estadio, :presupuesto)";//Consulta para insertar clubs
-        $connection->executeStatement($sql, [//Ejecuta la consulta y devuelve los resultados
-            'id_club' => $request->request->get('id_club'),
-            'nombre' => $request->request->get('nombre'),
-            'fundacion' => $request->request->get('fundacion'),
-            'ciudad' => $request->request->get('ciudad'),
-            'estadio' => $request->request->get('estadio'),
-            'presupuesto' => $request->request->get('presupuesto')
-        ]);
+        // Crear nuevo club
+        $club = new Club();
+        $club->setIdClub($id_club);
+        $club->setNombre($nombre);
+        $club->setFundacion($fundacion);
+        $club->setCiudad($ciudad);
+        $club->setEstadio($estadio);
+        $club->setPresupuesto($presupuesto);
+
+        $entityManager->persist($club);
+        $entityManager->flush();
+
         //Devuelve los resultados en formato JSON
         return $this->json([
             'message' => 'Club created successfully'
@@ -119,10 +114,9 @@ class ClubController extends AbstractController
             $updateFields[] = 'presupuesto = :presupuesto';
             $data['presupuesto'] = $jsonData['presupuesto'];
         }
-        if($jsonData['presupuesto'] == 0){
-           return $this->json(['error' => 'El presupuesto no puede ser 0'], 400);
+        if($jsonData['presupuesto'] <= 0){
+           return $this->json(['error' => 'El presupuesto no puede ser 0 o negativo'], 400);
         }
-
         if (empty($updateFields)) {
             return $this->json(['error' => 'No hay campos para actualizar'], 400);
         }
@@ -147,13 +141,12 @@ class ClubController extends AbstractController
     }
 
     #[Route('/clubs/{id_club}', name: 'club_get', methods: ['GET'])]//Ruta para obtener un club en concreto
-    public function getClub(Connection $connection, $id_club): Response//Metodo para obtener un club en concreto
+    public function getClub(EntityManagerInterface $entityManager, $id_club): Response//Metodo para obtener un club en concreto
     {
-        $sql = "SELECT * FROM club WHERE id_club = :id_club";//Consulta para obtener un club en concreto
-        $club = $connection->fetchAssociative($sql, ['id_club' => $id_club]);//Ejecuta la consulta y devuelve los resultados
+        $club = $entityManager->getRepository(Club::class)->find($id_club);//Obtiene el club por ID
 
-        if (!$club) {//Si no se encuentra el club, devuelve false
-            return $this->json(false);
+        if (!$club) {//Si no se encuentra el club, devuelve error
+            return $this->json(['error' => 'Club not found'], 404);
         }
 
         //Devuelve los resultados en formato JSON

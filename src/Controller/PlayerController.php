@@ -6,16 +6,17 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
-use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
+use App\Entity\Player;
+use App\Entity\Club;
 
 //Clase controladora de players
 class PlayerController extends AbstractController
 {
     #[Route('/players', name: 'player_list', methods: ['GET'])] //Ruta para listar players
-    public function listPlayers(Connection $connection): Response
+    public function listPlayers(EntityManagerInterface $entityManager): Response
     {
-        $sql = "SELECT nombre,apellidos,dorsal,id_club,salario FROM player"; //Consulta para listar players
-        $players = $connection->fetchAllAssociative($sql);// Ejecuta la consulta y devuelve los resultados
+        $players = $entityManager->getRepository(Player::class)->findAll();//Obtiene todos los players
         //Devuelve los resultados en formato JSON
         return $this->json([
             'players' => $players,
@@ -23,92 +24,125 @@ class PlayerController extends AbstractController
     }
 
     #[Route('/players', name: 'player_insert', methods: ['POST'])] //Ruta para insertar players
-    public function createPlayer(Connection $connection, Request $request): Response //Metodo para insertar players
+    public function createPlayer(EntityManagerInterface $entityManager, Request $request): Response //Metodo para insertar players
     {
-        $sql = "INSERT INTO player (nombre,apellidos,dorsal,id_club,salario)
-        VALUES (:nombre, :apellidos, :dorsal, :id_club, :salario)";
-        $connection->executeStatement($sql, [ //Ejecuta la consulta y devuelve los resultados
-            //Parametros de la consulta
-            'nombre' => $request->request->get('nombre'),
-            'apellidos' => $request->request->get('apellidos'),
-            'dorsal' => $request->request->get('dorsal'),
-            'id_club' => $request->request->get('id_club'),
-            'salario' => $request->request->get('salario')
+        $errores = [];
+        // Obtener todos los campos
+        $nombre = $request->request->get('nombre');
+        $apellidos = $request->request->get('apellidos');
+        $dorsal = $request->request->get('dorsal');
+        $id_club = $request->request->get('id_club');
+        $salario = $request->request->get('salario');
+
+        // Verificar que todos los campos estén presentes
+        if (empty($nombre) || empty($apellidos) || empty($dorsal) || empty($id_club) || empty($salario)) {
+            return $this->json(['error' => 'Todos los campos son requeridos'], 400);
+        }
+
+        // Verificar si el club existe
+        $club = $entityManager->getRepository(Club::class)->find($id_club);
+        if (!$club) {
+            $errores['id_club'] = 'El club no existe';
+        }
+
+        // Verificar si el dorsal ya existe en el club
+        $existingPlayer = $entityManager->getRepository(Player::class)->findOneBy([
+            'dorsal' => $dorsal,
+            'club' => $club
         ]);
+        if ($existingPlayer) {
+            $errores['dorsal'] = 'El dorsal ya existe en este club';
+        }
+
+        if (!empty($errores)) {
+            return $this->json(['error' => $errores], 400);
+        }
+
+        // Crear nuevo player
+        $player = new Player();
+        $player->setNombre($nombre);
+        $player->setApellidos($apellidos);
+        $player->setDorsal($dorsal);
+        $player->setClub($club);
+        $player->setSalario($salario);
+
+        $entityManager->persist($player);
+        $entityManager->flush();
+
         //Devuelve los resultados en formato JSON
-        return $this->json([ //Devuelve los resultados en formato JSON
+        return $this->json([
             'message' => 'Player created successfully'
         ]);
     }
 
     #[Route('/players/{id}', name: 'player_delete', methods: ['DELETE'])]
-    public function deletePlayer(Connection $connection, $id): Response
+    public function deletePlayer(EntityManagerInterface $entityManager, $id): Response
     {
-        $sql = "DELETE FROM player WHERE id = :id"; //Consulta para eliminar players
-        $connection->executeStatement($sql, [ //Ejecuta la consulta y devuelve los resultados
-            'id' => $id
-        ]);
+        $player = $entityManager->getRepository(Player::class)->find($id);
+        
+        if (!$player) {
+            return $this->json(['error' => 'Player not found'], 404);
+        }
+
+        $entityManager->remove($player);
+        $entityManager->flush();
+        
         //Devuelve los resultados en formato JSON
-        return $this->json([ //Devuelve los resultados en formato JSON
+        return $this->json([
             'message' => 'Player deleted successfully'
         ]);
     }
 
     #[Route('/players/{id}', name: 'player_update', methods: ['PUT'])]//Ruta para actualizar players
-    public function updatePlayer(Connection $connection, $id, Request $request): Response//Metodo para actualizar players
+    public function updatePlayer(EntityManagerInterface $entityManager, $id, Request $request): Response//Metodo para actualizar players
     {
-        // Obtener datos del JSON
-        $body = $request->getContent();//Obtener datos del JSON
-        $jsonData = json_decode($body, true);//Decodificar el JSON
+        $player = $entityManager->getRepository(Player::class)->find($id);
         
-        // Construir la consulta UPDATE solo con los campos que se envían
-        $updateFields = [];//Construir la consulta UPDATE solo con los campos que se envían
-        $data = ['id' => $id];
-        //Construir la consulta UPDATE solo con los campos que se envían
+        if (!$player) {
+            return $this->json(['error' => 'Player not found'], 404);
+        }
+
+        // Obtener datos del JSON
+        $body = $request->getContent();
+        $jsonData = json_decode($body, true);
+        
         if (isset($jsonData['nombre'])) {
-            $updateFields[] = 'nombre = :nombre';
-            $data['nombre'] = $jsonData['nombre'];
+            $player->setNombre($jsonData['nombre']);
         }
         if (isset($jsonData['apellidos'])) {
-            $updateFields[] = 'apellidos = :apellidos';
-            $data['apellidos'] = $jsonData['apellidos'];
+            $player->setApellidos($jsonData['apellidos']);
         }
         if (isset($jsonData['dorsal'])) {
-            $updateFields[] = 'dorsal = :dorsal';
-            $data['dorsal'] = $jsonData['dorsal'];
+            $player->setDorsal($jsonData['dorsal']);
         }
         if (isset($jsonData['id_club'])) {
-            $updateFields[] = 'id_club = :id_club';
-            $data['id_club'] = $jsonData['id_club'];
+            $club = $entityManager->getRepository(Club::class)->find($jsonData['id_club']);
+            if ($club) {
+                $player->setClub($club);
+            }
         }
         if (isset($jsonData['salario'])) {
-            $updateFields[] = 'salario = :salario';
-            $data['salario'] = $jsonData['salario'];
+            $player->setSalario($jsonData['salario']);
         }
+
+        $entityManager->flush();
         
-        if (empty($updateFields)) {
-            return $this->json(['error' => 'No hay campos para actualizar'], 400);
-        }
-        
-        $sql = "UPDATE player SET " . implode(', ', $updateFields) . " WHERE id = :id";//consulta para actualizar players
-        $result = $connection->executeStatement($sql, $data);//Ejecuta la consulta y devuelve los resultados
         //Devuelve los resultados en formato JSON
         return $this->json([
-            'message' => 'Player updated successfully',
+            'message' => 'Player updated successfully'
         ]);
     }
 
     #[Route('/players/{id}', name: 'player_get', methods: ['GET'])]//Ruta para obtener un player en concreto
-    public function getPlayer(Connection $connection, $id): Response//Metodo para obtener un player en concreto
+    public function getPlayer(EntityManagerInterface $entityManager, $id): Response//Metodo para obtener un player en concreto
     {
-        $sql = "SELECT nombre,apellidos,dorsal,id_club,salario FROM player WHERE id = :id";//consulta para obtener un player en concreto
-        $player = $connection->fetchAssociative($sql, ['id' => $id]);//Ejecuta la consulta y devuelve los resultados
-        //Devuelve los resultados en formato JSON
-        //Si no se encuentra el player, devuelve false y si lo encuentra, devuelve el player
-        if (!$player) {
-            return $this->json(false);
+        $player = $entityManager->getRepository(Player::class)->find($id);//Obtiene el player por ID
+
+        if (!$player) {//Si no se encuentra el player, devuelve error
+            return $this->json(['error' => 'Player not found'], 404);
         }
-        
+
+        //Devuelve los resultados en formato JSON
         return $this->json($player);
     }
 }
