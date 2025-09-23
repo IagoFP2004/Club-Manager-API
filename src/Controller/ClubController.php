@@ -132,6 +132,9 @@ class ClubController extends AbstractController
             $updateFields[] = 'presupuesto = :presupuesto';
             $data['presupuesto'] = $jsonData['presupuesto'];
         }
+        if($jsonData['presupuesto'] == 0){
+           return $this->json(['error' => 'El presupuesto no puede ser 0'], 400);
+        }
 
         if (empty($updateFields)) {
             return $this->json(['error' => 'No hay campos para actualizar'], 400);
