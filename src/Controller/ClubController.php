@@ -10,7 +10,7 @@ use Doctrine\DBAL\Connection;
 
 class ClubController extends AbstractController
 {
-    #[Route('/club', name: 'club_list', methods: ['GET'])]//Ruta para listar clubs
+    #[Route('/clubs', name: 'club_list', methods: ['GET'])]//Ruta para listar clubs
     public function listClubs(Connection $connection): Response//Metodo para listar clubs
     {
         $sql = "SELECT id_club, nombre, fundacion, ciudad, estadio, entrenador, presupuesto FROM club";//Consulta para listar clubs
@@ -21,7 +21,7 @@ class ClubController extends AbstractController
         ]);
     }
 
-    #[Route('/club', name: 'club_insert', methods: ['POST'])]//Ruta para insertar clubs
+    #[Route('/clubs', name: 'club_insert', methods: ['POST'])]//Ruta para insertar clubs
     public function createClub(Connection $connection, Request $request): Response//Metodo para insertar clubs
     {
 
@@ -101,7 +101,7 @@ class ClubController extends AbstractController
         ]);
     }
 
-    #[Route('/club/{id_club}', name: 'club_update', methods: ['PUT'])]//Ruta para actualizar clubs
+    #[Route('/clubs/{id_club}', name: 'club_update', methods: ['PUT'])]//Ruta para actualizar clubs
     public function updateClub(Connection $connection, $id_club, Request $request): Response//Metodo para actualizar clubs
     {
         $body = $request->getContent();
@@ -145,7 +145,7 @@ class ClubController extends AbstractController
         ]);
     }
 
-    #[Route('/club/{id_club}', name: 'club_delete', methods: ['DELETE'])]//Ruta para eliminar clubs
+    #[Route('/clubs/{id_club}', name: 'club_delete', methods: ['DELETE'])]//Ruta para eliminar clubs
     public function deleteClub(Connection $connection, $id_club): Response//Metodo para eliminar clubs
     {
         $sql = "DELETE FROM club WHERE id_club = :id_club";//Consulta para eliminar clubs
@@ -156,7 +156,7 @@ class ClubController extends AbstractController
         ]);
     }
 
-    #[Route('/club/{id_club}', name: 'club_get', methods: ['GET'])]//Ruta para obtener un club en concreto
+    #[Route('/clubs/{id_club}', name: 'club_get', methods: ['GET'])]//Ruta para obtener un club en concreto
     public function getClub(Connection $connection, $id_club): Response//Metodo para obtener un club en concreto
     {
         $sql = "SELECT * FROM club WHERE id_club = :id_club";//Consulta para obtener un club en concreto

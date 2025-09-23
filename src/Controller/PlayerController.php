@@ -11,7 +11,7 @@ use Doctrine\DBAL\Connection;
 //Clase controladora de players
 class PlayerController extends AbstractController
 {
-    #[Route('/player', name: 'player_list', methods: ['GET'])] //Ruta para listar players
+    #[Route('/players', name: 'player_list', methods: ['GET'])] //Ruta para listar players
     public function listPlayers(Connection $connection): Response
     {
         $sql = "SELECT nombre,apellidos,dorsal,id_club,salario FROM player"; //Consulta para listar players
@@ -22,7 +22,7 @@ class PlayerController extends AbstractController
         ]);
     }
 
-    #[Route('/player', name: 'player_insert', methods: ['POST'])] //Ruta para insertar players
+    #[Route('/players', name: 'player_insert', methods: ['POST'])] //Ruta para insertar players
     public function createPlayer(Connection $connection, Request $request): Response //Metodo para insertar players
     {
         $sql = "INSERT INTO player (nombre,apellidos,dorsal,id_club,salario)
@@ -41,7 +41,7 @@ class PlayerController extends AbstractController
         ]);
     }
 
-    #[Route('/player/{id}', name: 'player_delete', methods: ['DELETE'])]
+    #[Route('/players/{id}', name: 'player_delete', methods: ['DELETE'])]
     public function deletePlayer(Connection $connection, $id): Response
     {
         $sql = "DELETE FROM player WHERE id = :id"; //Consulta para eliminar players
@@ -54,7 +54,7 @@ class PlayerController extends AbstractController
         ]);
     }
 
-    #[Route('/player/{id}', name: 'player_update', methods: ['PUT'])]//Ruta para actualizar players
+    #[Route('/players/{id}', name: 'player_update', methods: ['PUT'])]//Ruta para actualizar players
     public function updatePlayer(Connection $connection, $id, Request $request): Response//Metodo para actualizar players
     {
         // Obtener datos del JSON
@@ -98,7 +98,7 @@ class PlayerController extends AbstractController
         ]);
     }
 
-    #[Route('/player/{id}', name: 'player_get', methods: ['GET'])]//Ruta para obtener un player en concreto
+    #[Route('/players/{id}', name: 'player_get', methods: ['GET'])]//Ruta para obtener un player en concreto
     public function getPlayer(Connection $connection, $id): Response//Metodo para obtener un player en concreto
     {
         $sql = "SELECT nombre,apellidos,dorsal,id_club,salario FROM player WHERE id = :id";//consulta para obtener un player en concreto
