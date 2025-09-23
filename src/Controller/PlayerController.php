@@ -41,12 +41,12 @@ class PlayerController extends AbstractController
         ]);
     }
 
-    #[Route('/player/{id_player}', name: 'player_delete', methods: ['DELETE'])]
-    public function deletePlayer(Connection $connection, $id_player): Response
+    #[Route('/player/{id}', name: 'player_delete', methods: ['DELETE'])]
+    public function deletePlayer(Connection $connection, $id): Response
     {
-        $sql = "DELETE FROM player WHERE id_player = :id_player"; //Consulta para eliminar players
+        $sql = "DELETE FROM player WHERE id = :id"; //Consulta para eliminar players
         $connection->executeStatement($sql, [ //Ejecuta la consulta y devuelve los resultados
-            'id_player' => $id_player
+            'id' => $id
         ]);
         //Devuelve los resultados en formato JSON
         return $this->json([ //Devuelve los resultados en formato JSON
@@ -54,8 +54,8 @@ class PlayerController extends AbstractController
         ]);
     }
 
-    #[Route('/player/{id_player}', name: 'player_update', methods: ['PUT'])]//Ruta para actualizar players
-    public function updatePlayer(Connection $connection, $id_player, Request $request): Response//Metodo para actualizar players
+    #[Route('/player/{id}', name: 'player_update', methods: ['PUT'])]//Ruta para actualizar players
+    public function updatePlayer(Connection $connection, $id, Request $request): Response//Metodo para actualizar players
     {
         // Obtener datos del JSON
         $body = $request->getContent();//Obtener datos del JSON
@@ -63,7 +63,7 @@ class PlayerController extends AbstractController
         
         // Construir la consulta UPDATE solo con los campos que se envían
         $updateFields = [];//Construir la consulta UPDATE solo con los campos que se envían
-        $data = ['id_player' => $id_player];
+        $data = ['id' => $id];
         //Construir la consulta UPDATE solo con los campos que se envían
         if (isset($jsonData['nombre'])) {
             $updateFields[] = 'nombre = :nombre';
@@ -90,7 +90,7 @@ class PlayerController extends AbstractController
             return $this->json(['error' => 'No hay campos para actualizar'], 400);
         }
         
-        $sql = "UPDATE player SET " . implode(', ', $updateFields) . " WHERE id_player = :id_player";//consulta para actualizar players
+        $sql = "UPDATE player SET " . implode(', ', $updateFields) . " WHERE id = :id";//consulta para actualizar players
         $result = $connection->executeStatement($sql, $data);//Ejecuta la consulta y devuelve los resultados
         //Devuelve los resultados en formato JSON
         return $this->json([
@@ -98,11 +98,11 @@ class PlayerController extends AbstractController
         ]);
     }
 
-    #[Route('/player/{id_player}', name: 'player_get', methods: ['GET'])]//Ruta para obtener un player en concreto
-    public function getPlayer(Connection $connection, $id_player): Response//Metodo para obtener un player en concreto
+    #[Route('/player/{id}', name: 'player_get', methods: ['GET'])]//Ruta para obtener un player en concreto
+    public function getPlayer(Connection $connection, $id): Response//Metodo para obtener un player en concreto
     {
-        $sql = "SELECT nombre,apellidos,dorsal,id_club,salario FROM player WHERE id_player = :id_player";//consulta para obtener un player en concreto
-        $player = $connection->fetchAssociative($sql, ['id_player' => $id_player]);//Ejecuta la consulta y devuelve los resultados
+        $sql = "SELECT nombre,apellidos,dorsal,id_club,salario FROM player WHERE id = :id";//consulta para obtener un player en concreto
+        $player = $connection->fetchAssociative($sql, ['id' => $id]);//Ejecuta la consulta y devuelve los resultados
         //Devuelve los resultados en formato JSON
         //Si no se encuentra el player, devuelve false y si lo encuentra, devuelve el player
         if (!$player) {
