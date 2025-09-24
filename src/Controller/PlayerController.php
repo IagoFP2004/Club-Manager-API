@@ -26,6 +26,7 @@ class PlayerController extends AbstractController
         foreach($players as $player)
         {
             $data[] = [
+                'id' => $player->getId(),
                 'nombre' => $player->getNombre(),
                 'apellidos' => $player->getApellidos(),
                 'dorsal' => $player->getDorsal(),
