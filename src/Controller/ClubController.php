@@ -25,11 +25,12 @@ class ClubController extends AbstractController
         $data = [];
         foreach($clubs as $club){
             // Obtener entrenadores del club
-            $entrenadores = [];
-            foreach($club->getCoaches() as $coach){
-                $entrenadores[] = $coach->getNombre() . ' ' . $coach->getApellidos();
+            $entrenador = '';
+            if($club->getCoaches()->count() > 0){
+                $coach = $club->getCoaches()->first();
+                $entrenador = $coach->getNombre() . ' ' . $coach->getApellidos();
             }
-
+            
             // Obtener jugadores del club
             $jugadores = [];
             foreach($club->getPlayers() as $player){
@@ -43,7 +44,7 @@ class ClubController extends AbstractController
                 'ciudad' => $club->getCiudad(),
                 'estadio' => $club->getEstadio(),
                 'presupuesto' => $club->getPresupuesto(),
-                'entrenador' => !empty($entrenadores) ? $entrenadores : 'Sin entrenadores',
+                'entrenador' => $entrenador,
                 'jugadores' => !empty($jugadores) ? $jugadores : 'Sin jugadores'
             ];
         }

@@ -34,7 +34,7 @@ class CoachController extends AbstractController
                 'dni' => $coach->getDni(),
                 'nombre' => $coach->getNombre(),
                 'apellidos' => $coach->getApellidos(),
-                'sueldo' => $coach->getSueldo()
+                'salario' => $coach->getSalario()
             ];
         }
         
@@ -56,7 +56,7 @@ class CoachController extends AbstractController
             'dni' => $coach->getDni(),
             'nombre' => $coach->getNombre(),
             'apellidos' => $coach->getApellidos(),
-            'sueldo' => $coach->getSueldo(),
+            'salario' => $coach->getSalario(),
             'club' => $coach->getClub()->getNombre()
         ];
 
@@ -79,11 +79,11 @@ class CoachController extends AbstractController
         $dni = $data['dni'] ?? null;
         $nombre = $data['nombre'] ?? null;
         $apellidos = $data['apellidos'] ?? null;
-        $sueldo = $data['sueldo'] ?? null;
+        $salario = $data['salario'] ?? null;
         $id_club = $data['id_club'] ?? null;
 
         // Verificar que todos los campos estén presentes
-        if (empty($dni) || empty($nombre) || empty($apellidos) || empty($sueldo) || empty($id_club)) {
+        if (empty($dni) || empty($nombre) || empty($apellidos) || empty($salario) || empty($id_club)) {
             return $this->json(['error' => 'Todos los campos son requeridos'], 400);
         }
 
@@ -114,7 +114,7 @@ class CoachController extends AbstractController
         $coach->setDni($dni);
         $coach->setNombre($nombre);
         $coach->setApellidos($apellidos);
-        $coach->setSueldo($sueldo);
+        $coach->setSalario($salario);
         $coach->setClub($club);
 
         $entityManager->persist($coach);
@@ -174,11 +174,11 @@ class CoachController extends AbstractController
             $coach->setApellidos($jsonData['apellidos']);
         }
         
-        if(isset($jsonData['sueldo'])){
-            if($jsonData['sueldo'] <= 0){
-                return $this->json(['error' => 'El sueldo no puede ser 0 o negativo'], 400);
+        if(isset($jsonData['salario'])){
+            if($jsonData['salario'] <= 0){
+                return $this->json(['error' => 'El salario no puede ser 0 o negativo'], 400);
             }else{
-                $coach->setSueldo($jsonData['sueldo']);
+                $coach->setSalario($jsonData['salario']);
             }
         }
         

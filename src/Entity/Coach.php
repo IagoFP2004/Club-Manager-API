@@ -24,7 +24,7 @@ class Coach
     private ?string $apellidos = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $sueldo = null;
+    private ?string $salario = null;
 
     #[ORM\ManyToOne(targetEntity: Club::class)]
     #[ORM\JoinColumn(name: 'id_club', referencedColumnName: 'id_club')]
@@ -71,14 +71,14 @@ class Coach
         return $this;
     }
 
-    public function getSueldo(): ?string
+    public function getSalario(): ?string
     {
-        return $this->sueldo;
+        return $this->salario;
     }
 
-    public function setSueldo(string $sueldo): static
+    public function setSalario(string $salario): static
     {
-        $this->sueldo = $sueldo;
+        $this->salario = $salario;
 
         return $this;
     }

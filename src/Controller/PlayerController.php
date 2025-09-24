@@ -11,13 +11,33 @@ use App\Entity\Player;
 use App\Entity\Club;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
+use Knp\Component\Pager\PaginatorInterface;
 
 class PlayerController extends AbstractController
 {
     #[Route('/players', name: 'player_list', methods: ['GET'])]
-    public function listPlayers(EntityManagerInterface $entityManager): Response
+    public function listPlayers(EntityManagerInterface $entityManager, PaginatorInterface $paginator, Request $request): Response
     {
-        $players = $entityManager->getRepository(Player::class)->findAll();
+        // Obtener todos los jugadores o filtrar por nombre
+        $queryBuilder = $entityManager->getRepository(Player::class)->createQueryBuilder('p');
+        
+        $nombre = $request->query->get('nombre');
+        $apellidos = $request->query->get('apellidos');
+        if($nombre){
+            $queryBuilder->where('p.nombre = :nombre')
+                        ->setParameter('nombre', $nombre);
+        }
+        
+        $query = $queryBuilder->getQuery();
+        
+        // Paginar los resultados
+        $players = $paginator->paginate(
+            $query,
+            $request->query->getInt('page', 1), // página actual
+            10 // elementos por página
+        );
 
         if(!$players)
         {
@@ -34,11 +54,25 @@ class PlayerController extends AbstractController
                 'dorsal' => $player->getDorsal(),
                 'salario' => $player->getSalario(),
                 'club' => $player->getClub() ? $player->getClub()->getNombre() : null,
-                'entrenador' =>$player->getClub()->getCoaches()->first()->getNombre() . ' ' . $player->getClub()->getCoaches()->first()->getApellidos()
+                'entrenador' => $player->getClub() && $player->getClub()->getCoaches()->count() > 0 
+                    ? $player->getClub()->getCoaches()->first()->getNombre() . ' ' . $player->getClub()->getCoaches()->first()->getApellidos()
+                    : 'Sin entrenador'
             ];
         }
 
-        return $this->json(['players' => $data]);
+        return $this->json([
+            'players' => $data,
+            'pagination' => [
+                'current_page' => $players->getCurrentPageNumber(),
+                'per_page' => $players->getItemNumberPerPage(),
+                'total_items' => $players->getTotalItemCount(),
+                'total_pages' => $players->getPageCount(),
+                'has_next_page' => $players->getCurrentPageNumber() < $players->getPageCount(),
+                'has_prev_page' => $players->getCurrentPageNumber() > 1,
+                'next_page' => $players->getCurrentPageNumber() < $players->getPageCount() ? $players->getCurrentPageNumber() + 1 : null,
+                'prev_page' => $players->getCurrentPageNumber() > 1 ? $players->getCurrentPageNumber() - 1 : null
+            ]
+        ]);
     }
 
     #[Route('/players/{id}', name: 'player_get', methods: ['GET'])]
@@ -64,7 +98,7 @@ class PlayerController extends AbstractController
     }
 
     #[Route('/players/{id}', name: 'player_delete', methods: ['DELETE'])]
-    public function deletePlayer(EntityManagerInterface $entityManager, $id): Response
+    public function deletePlayer(EntityManagerInterface $entityManager, MailerInterface $mailer, $id): Response
     {
         $player = $entityManager->getRepository(Player::class)->find($id);
 
@@ -78,13 +112,21 @@ class PlayerController extends AbstractController
         $entityManager->remove($player);
         $entityManager->flush();
 
-        $this->sendEmailRemoved($player, $club);
-
+        //$this->sendEmailRemoved($player, $club);
+        /*
+            $email = (new Email())
+                ->from($_ENV['MAILER_FROM_EMAIL'])
+                ->to('iago.francisco@siweb.es')
+                ->subject('Jugador registrado - ' . $club->getNombre())
+                ->html('El jugador ' . $player->getNombre() . ' ' . $player->getApellidos(). ' ha sido dado de baja en el club ' . $club->getNombre());
+            
+            $mailer->send($email);
+        */
         return $this->json(['message' => 'Player deleted successfully']);
     }
 
     #[Route('/players', name: 'player_create', methods: ['POST'])]
-    public function createPlayer(EntityManagerInterface $entityManager, Request $request): Response
+    public function createPlayer(EntityManagerInterface $entityManager, MailerInterface $mailer, Request $request): Response
     {
         // Obtener los datos del JSON
         $body = $request->getContent();
@@ -139,8 +181,16 @@ class PlayerController extends AbstractController
         $entityManager->flush();
 
         //Enviamos el email
-        $this->sendEmailRegistered($player, $club);
+        #$this->sendEmailRegistered($player, $club);
+        /*
+            $email = (new Email())
+                ->from($_ENV['MAILER_FROM_EMAIL'])
+                ->to('iago.francisco@siweb.es')
+                ->subject('Jugador registrado - ' . $club->getNombre())
+                ->html('El jugador ' . $player->getNombre() . ' ' . $player->getApellidos(). ' ha sido dado de alta en el club ' . $club->getNombre());
 
+            $mailer->send($email);
+        */
         //Devolvemos el mensaje de éxito
         return $this->json(['message' => 'Player created successfully']);
         
@@ -211,7 +261,7 @@ class PlayerController extends AbstractController
 
     }    
 
-
+/*
 
     public function sendEmailRemoved(Object $player, Object $club):Response
     {
@@ -270,4 +320,5 @@ class PlayerController extends AbstractController
             return $this->json(['error' => 'Error al enviar el email: ' . $e->getMessage()], 500);
         }
     }
+        */
 }
