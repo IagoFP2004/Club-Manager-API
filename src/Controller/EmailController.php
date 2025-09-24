@@ -33,7 +33,7 @@ class EmailController extends AbstractController
 
         try {
             $email = (new Email())
-                ->from('noreply@tudominio.com')
+                ->from($_ENV['MAILER_FROM_EMAIL'] ?? 'noreply@gmail.com')
                 ->to($to)
                 ->subject($subject)
                 ->text($message)
@@ -68,8 +68,8 @@ class EmailController extends AbstractController
         }
 
         $headers = [
-            'From: noreply@tudominio.com',
-            'Reply-To: noreply@tudominio.com',
+            'From: ' . ($_ENV['MAILER_FROM_EMAIL'] ?? 'noreply@gmail.com'),
+            'Reply-To: ' . ($_ENV['MAILER_FROM_EMAIL'] ?? 'noreply@gmail.com'),
             'X-Mailer: PHP/' . phpversion(),
             'Content-Type: text/html; charset=UTF-8'
         ];
