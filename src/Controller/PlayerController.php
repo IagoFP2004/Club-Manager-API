@@ -9,6 +9,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Player;
 use App\Entity\Club;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 class PlayerController extends AbstractController
 {
@@ -70,8 +72,13 @@ class PlayerController extends AbstractController
             return $this->json(['error' => 'Player not found'], 404);
         }
 
+        // Guardar datos del jugador y club antes de eliminar
+        $club = $player->getClub();
+
         $entityManager->remove($player);
         $entityManager->flush();
+
+        $this->sendEmailRemoved($player, $club);
 
         return $this->json(['message' => 'Player deleted successfully']);
     }
@@ -106,17 +113,33 @@ class PlayerController extends AbstractController
             return $this->json(['error' => 'Club not found'], 404);
         }
 
+        //Guardamos los dorsales del club del jugador
+        $playersDelClub = $entityManager->getRepository(Player::class)->findBy(['club' => $club]);
+        $dorsales = [];
+        foreach($playersDelClub as $p){
+            $dorsales[] = $p->getDorsal();
+        }
+
         //Creamos al jugador y le asignamos los datos
         $player = new Player();
         $player->setNombre($nombre);
         $player->setApellidos($apellidos);
-        $player->setDorsal($dorsal);
+        if($dorsal <= 0 || $dorsal> 99) {
+            return $this->json(['error' => 'El dorsal debe ser mayor que 0 y menor que 100'], 400);
+        }else if(in_array($dorsal, $dorsales)){
+            return $this->json(['error' => 'El dorsal ya existe en el club'], 400);
+        }else{
+            $player->setDorsal($dorsal);
+        }
         $player->setSalario($salario);
         $player->setClub($club);
 
         //Guardamos el jugador en la base de datos
         $entityManager->persist($player);
         $entityManager->flush();
+
+        //Enviamos el email
+        $this->sendEmailRegistered($player, $club);
 
         //Devolvemos el mensaje de éxito
         return $this->json(['message' => 'Player created successfully']);
@@ -161,11 +184,12 @@ class PlayerController extends AbstractController
             $player->setApellidos($jsonData['apellidos']);
         }
         if(isset($jsonData['dorsal'])){
-            $player->setDorsal($jsonData['dorsal']);
             if($jsonData['dorsal'] <= 0 || $jsonData['dorsal'] > 99) {
                 return $this->json(['error' => 'El dorsal debe ser mayor que 0 y menor que 100'], 400);
             }else if(in_array($jsonData['dorsal'], $dorsales)){
                 return $this->json(['error' => 'El dorsal ya existe en el club'], 400);
+            }else{
+                $player->setDorsal($jsonData['dorsal']);
             }
         }
         if(isset($jsonData['salario'])){
@@ -182,12 +206,68 @@ class PlayerController extends AbstractController
             $player->setClub($club);
         }
 
-        //Actualizamos el jugador en la base de datos
-        $entityManager->flush();
-
         //Devolvemos el mensaje de éxito
         return $this->json(['message' => 'Player updated successfully']);
 
     }    
+
+
+
+    public function sendEmailRemoved(Object $player, Object $club):Response
+    {
+        $mail = new PHPMailer(true);
+
+        try {
+            //Configuración del servidor
+            $mail->isSMTP();
+            $mail->Host = 'sandbox.smtp.mailtrap.io';
+            $mail->SMTPAuth = true;
+            $mail->Username = '773668dbb758a8';
+            $mail->Password = 'd5eff39568411d';
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;//TLS
+            $mail->Port = 587; //Puerto TLS
+            
+            //Remitente y destinatario
+            $mail->setFrom('no-reply@gmail.com', 'No-reply');
+            $mail->addAddress('LaLiga@gmail.com', 'LaLiga'); 
+
+            //Contenido
+            $mail->isHTML(true);
+            $mail->Subject = 'Jugador eliminado';
+            $mail->Body = 'El jugador ' . $player->getNombre() . ' ' . $player->getApellidos() . ' ha sido eliminado del club ' . $club->getNombre();
+            $mail->send();
+            return $this->json(['message' => 'Email enviado correctamente']);
+        }catch(Exception $e){
+            return $this->json(['error' => 'Error al enviar el email'], 500);
+        }
+    }
     
+    public function sendEmailRegistered(Object $player, Object $club):Response
+    {
+        $mail = new PHPMailer(true);
+
+        try {
+            //Configuración del servidor
+            $mail->isSMTP();
+            $mail->Host = 'sandbox.smtp.mailtrap.io';
+            $mail->SMTPAuth = true;
+            $mail->Username = '773668dbb758a8';
+            $mail->Password = 'd5eff39568411d';
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;//TLS
+            $mail->Port = 587; //Puerto TLS
+            
+            //Remitente y destinatario
+            $mail->setFrom('no-reply@gmail.com', 'No-reply');
+            $mail->addAddress('LaLiga@gmail.com', 'LaLiga'); 
+
+            //Contenido
+            $mail->isHTML(true);
+            $mail->Subject = 'Jugador registrado - ' . $club->getNombre();
+            $mail->Body = 'El jugador ' . $player->getNombre() . ' ' . $player->getApellidos() . ' ha sido dado de alta en el club ' . $club->getNombre();
+            $mail->send();
+            return $this->json(['message' => 'Email enviado correctamente']);
+        } catch(Exception $e) {
+            return $this->json(['error' => 'Error al enviar el email: ' . $e->getMessage()], 500);
+        }
+    }
 }
