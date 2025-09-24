@@ -36,7 +36,7 @@ class PlayerController extends AbstractController
         $players = $paginator->paginate(
             $query,
             $request->query->getInt('page', 1), // página actual
-            10 // elementos por página
+            $request->query->getInt('pageSize', 10) // elementos por página
         );
 
         if(!$players)
