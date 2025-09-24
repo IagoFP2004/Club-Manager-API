@@ -8,68 +8,153 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Club;
+use App\Entity\Player;
+use App\Entity\Coach;
 
 class ClubController extends AbstractController
 {
-    #[Route('/clubs', name: 'club_list', methods: ['GET'])]//Ruta para listar clubs
-    public function listClubs(EntityManagerInterface $entityManager): Response//Metodo para listar clubs
+    #[Route('/clubs', name: 'club_list', methods: ['GET'])]
+    public function listClubs(EntityManagerInterface $entityManager): Response
     {
-        $clubs = $entityManager->getRepository(Club::class)->findAll();//Obtiene todos los clubs
-        //Devuelve los resultados en formato JSON
-        return $this->json([
-            'clubs' => $clubs
-        ]);
+        $clubs = $entityManager->getRepository(Club::class)->findAll();
+
+        if(!$clubs){
+            return $this->json(['message' => 'No hay clubs registrados'], 400);
+        }
+
+        $data = [];
+        foreach($clubs as $club){
+            // Obtener entrenadores del club
+            $entrenadores = [];
+            foreach($club->getCoaches() as $coach){
+                $entrenadores[] = $coach->getNombre() . ' ' . $coach->getApellidos();
+            }
+
+            // Obtener jugadores del club
+            $jugadores = [];
+            foreach($club->getPlayers() as $player){
+                $jugadores[] = $player->getNombre() . ' ' . $player->getApellidos();
+            }
+
+            $data[] = [
+                'id_club' => $club->getIdClub(),
+                'nombre' => $club->getNombre(),
+                'fundacion' => $club->getFundacion(),
+                'ciudad' => $club->getCiudad(),
+                'estadio' => $club->getEstadio(),
+                'presupuesto' => $club->getPresupuesto(),
+                'entrenador' => !empty($entrenadores) ? $entrenadores : 'Sin entrenadores',
+                'jugadores' => !empty($jugadores) ? $jugadores : 'Sin jugadores'
+            ];
+        }
+
+        return $this->json(['clubs' => $data]);
     }
 
-    #[Route('/clubs', name: 'club_insert', methods: ['POST'])]//Ruta para insertar clubs
-    public function createClub(EntityManagerInterface $entityManager, Request $request): Response//Metodo para insertar clubs
+    #[Route('/clubs/{id}', name: 'club_get', methods: ['GET'])]
+    public function getClub(EntityManagerInterface $entityManager, $id): Response
     {
-        $errores = [];
-        // Obtener todos los campos
-        $id_club = $request->request->get('id_club');
-        $nombre = $request->request->get('nombre');
-        $fundacion = $request->request->get('fundacion');
-        $ciudad = $request->request->get('ciudad');
-        $estadio = $request->request->get('estadio');
-        $presupuesto = $request->request->get('presupuesto');
+        $club = $entityManager->getRepository(Club::class)->find($id);
 
-        // Verificar que todos los campos estén presentes
-        if (empty($id_club) || empty($nombre) || empty($fundacion) || empty($ciudad) || empty($estadio) || ($presupuesto === null || $presupuesto === '')) {
+        if(!$club){
+            return $this->json(['error' => 'Club not found'], 404);
+        }
+
+        // Obtener entrenadores del club
+        $entrenadores = [];
+        foreach($club->getCoaches() as $coach){
+            $entrenadores[] = $coach->getNombre() . ' ' . $coach->getApellidos();
+        }
+
+        // Obtener jugadores del club
+        $jugadores = [];
+        foreach($club->getPlayers() as $player){
+            $jugadores[] = $player->getNombre() . ' ' . $player->getApellidos();
+        }
+
+        $data = [
+            'id_club' => $club->getIdClub(),
+            'nombre' => $club->getNombre(),
+            'fundacion' => $club->getFundacion(),
+            'ciudad' => $club->getCiudad(),
+            'estadio' => $club->getEstadio(),
+            'presupuesto' => $club->getPresupuesto(),
+            'entrenador' => !empty($entrenadores) ? $entrenadores : 'Sin entrenadores',
+            'jugadores' => !empty($jugadores) ? $jugadores : 'Sin jugadores'
+        ];
+
+        return $this->json(['club' => $data]);
+    }
+
+    #[Route('/clubs/{id}', name: 'club_delete', methods: ['DELETE'])]
+    public function deleteClub(EntityManagerInterface $entityManager, $id): Response
+    {
+        $club = $entityManager->getRepository(Club::class)->find($id);
+        
+        if(!$club){
+            return $this->json(['error' => 'Club not found'], 404);
+        }
+
+        $entityManager->remove($club);
+        $entityManager->flush();
+
+        return $this->json(['message' => 'Club deleted successfully']);
+    }
+
+    #[Route('/clubs', name: 'club_create', methods: ['POST'])]
+    public function createClub(EntityManagerInterface $entityManager, Request $request): Response
+    {
+        $body = $request->getContent();
+        $jsonData = json_decode($body, true);
+        
+        if(!$jsonData){
+            return $this->json(['error' => 'Invalid JSON'], 400);
+        }
+
+        $id_club = $jsonData['id_club'] ?? null;
+        $nombre = $jsonData['nombre'] ?? null;
+        $fundacion = $jsonData['fundacion'] ?? null;
+        $ciudad = $jsonData['ciudad'] ?? null;
+        $estadio = $jsonData['estadio'] ?? null;
+        $presupuesto = $jsonData['presupuesto'] ?? null;
+
+        if(empty($id_club) || empty($nombre) || empty($fundacion) || empty($ciudad) || empty($estadio) || empty($presupuesto)){
             return $this->json(['error' => 'Todos los campos son requeridos'], 400);
         }
 
-        // Validar presupuesto
-        if (!is_numeric($presupuesto)) {
-            $errores['presupuesto'] = "El presupuesto debe ser un número válido";
-        } elseif ($presupuesto == 0) {
-            $errores['presupuesto'] = "El presupuesto del club no puede ser 0";
-        } elseif ($presupuesto < 0) {
-            $errores['presupuesto'] = "El presupuesto no puede ser negativo";
+        $errores = [];
+
+        if(empty($id_club)){
+            $errores['id_club'] = 'El id_club es requerido';
+        }else if(strlen($id_club) < 3 || strlen($id_club) > 5){
+            $errores['id_club'] = 'El id_club debe tener entre 3 y 5 caracteres';
+        }else if($entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id_club])){
+            $errores['id_club'] = 'El id_club ya existe';
+        }
+        if(empty($nombre)){
+            $errores['nombre'] = 'El nombre es requerido';
+        }
+        if(empty($fundacion)){
+            $errores['fundacion'] = 'La fundacion es requerida';
+        }else if($fundacion < 1857 || $fundacion > date('Y')){
+            $errores['fundacion'] = 'La fundacion debe ser entre 1800 y 2025';
+        }
+        if(empty($ciudad)){
+            $errores['ciudad'] = 'La ciudad es requerida';
+        }
+        if(empty($estadio)){
+            $errores['estadio'] = 'El estadio es requerido';
+        }
+        if(empty($presupuesto)){
+            $errores['presupuesto'] = 'El presupuesto es requerido';
+        }else if($presupuesto <= 0){
+            $errores['presupuesto'] = 'El presupuesto no puede ser 0 o negativo';
         }
 
-        // Verificar si el club ya existe
-        $existingClub = $entityManager->getRepository(Club::class)->find($id_club);
-        if ($existingClub) {
-            $errores['id_club'] = 'El club ya existe';
-        }
-
-        // Verificar si el nombre ya existe
-        $existingClubName = $entityManager->getRepository(Club::class)->findOneBy(['nombre' => $nombre]);
-        if ($existingClubName) {
-            $errores['nombre'] = 'El nombre del club ya existe';
-        }
-
-        // Verificar si el estadio ya existe
-        $existingClubEstadio = $entityManager->getRepository(Club::class)->findOneBy(['estadio' => $estadio]);
-        if ($existingClubEstadio) {
-            $errores['estadio'] = 'El estadio ya existe';
-        }
-
-        if (!empty($errores)) {
+        if(!empty($errores)){
             return $this->json(['error' => $errores], 400);
         }
 
-        // Crear nuevo club
         $club = new Club();
         $club->setIdClub($id_club);
         $club->setNombre($nombre);
@@ -81,76 +166,61 @@ class ClubController extends AbstractController
         $entityManager->persist($club);
         $entityManager->flush();
 
-        //Devuelve los resultados en formato JSON
-        return $this->json([
-            'message' => 'Club created successfully'
-        ]);
+        return $this->json(['message' => 'Club created successfully']);
     }
 
-    #[Route('/clubs/{id_club}', name: 'club_update', methods: ['PUT'])]//Ruta para actualizar clubs
-    public function updateClub(Connection $connection, $id_club, Request $request): Response//Metodo para actualizar clubs
+    #[Route('/clubs/{id}', name: 'club_update', methods: ['PUT'])]
+    public function updateClub(EntityManagerInterface $entityManager, $id, Request $request): Response
     {
-        $body = $request->getContent();
-        $jsonData = json_decode($body, true);
-        $updateFields = [];
-        $data = ['id_club' => $id_club];
-        if (isset($jsonData['nombre'])) {
-            $updateFields[] = 'nombre = :nombre';
-            $data['nombre'] = $jsonData['nombre'];
-        }
-        if (isset($jsonData['fundacion'])) {
-            $updateFields[] = 'fundacion = :fundacion';
-            $data['fundacion'] = $jsonData['fundacion'];
-        }
-        if (isset($jsonData['ciudad'])) {
-            $updateFields[] = 'ciudad = :ciudad';
-            $data['ciudad'] = $jsonData['ciudad'];
-        }
-        if (isset($jsonData['estadio'])) {
-            $updateFields[] = 'estadio = :estadio';
-            $data['estadio'] = $jsonData['estadio'];
-        }
-        if (isset($jsonData['presupuesto'])) {
-            $updateFields[] = 'presupuesto = :presupuesto';
-            $data['presupuesto'] = $jsonData['presupuesto'];
-        }
-        if($jsonData['presupuesto'] <= 0){
-           return $this->json(['error' => 'El presupuesto no puede ser 0 o negativo'], 400);
-        }
-        if (empty($updateFields)) {
-            return $this->json(['error' => 'No hay campos para actualizar'], 400);
-        }
-
-        $sql = "UPDATE club SET " . implode(', ', $updateFields) . " WHERE id_club = :id_club";//Consulta para actualizar clubs
-        $result = $connection->executeStatement($sql, $data);//Ejecuta la consulta y devuelve los resultados
-        //Devuelve los resultados en formato JSON
-        return $this->json([
-            'message' => 'Club updated successfully'
-        ]);
-    }
-
-    #[Route('/clubs/{id_club}', name: 'club_delete', methods: ['DELETE'])]//Ruta para eliminar clubs
-    public function deleteClub(Connection $connection, $id_club): Response//Metodo para eliminar clubs
-    {
-        $sql = "DELETE FROM club WHERE id_club = :id_club";//Consulta para eliminar clubs
-        $connection->executeStatement($sql, ['id_club' => $id_club]);//Ejecuta la consulta y devuelve los resultados
-        //Devuelve los resultados en formato JSON
-        return $this->json([
-            'message' => 'Club deleted successfully'
-        ]);
-    }
-
-    #[Route('/clubs/{id_club}', name: 'club_get', methods: ['GET'])]//Ruta para obtener un club en concreto
-    public function getClub(EntityManagerInterface $entityManager, $id_club): Response//Metodo para obtener un club en concreto
-    {
-        $club = $entityManager->getRepository(Club::class)->find($id_club);//Obtiene el club por ID
-
-        if (!$club) {//Si no se encuentra el club, devuelve error
+        $club = $entityManager->getRepository(Club::class)->find($id);
+        
+        if(!$club){
             return $this->json(['error' => 'Club not found'], 404);
         }
 
-        //Devuelve los resultados en formato JSON
-        return $this->json($club);
-    }
+        $body = $request->getContent();
+        $jsonData = json_decode($body, true);
+
+        $errores = [];
+        if(!$jsonData){
+            return $this->json(['error' => 'No hay datos para actualizar'], 400);
+        }
+
+        if(isset($jsonData['id_club'])){
+            $errores['id_club'] = 'El id_club no puede ser modificado';
+        }
+        if(isset($jsonData['nombre'])){
+            $club->setNombre($jsonData['nombre']);
+        }
+        if(isset($jsonData['fundacion'])){
+            if($jsonData['fundacion'] < 1857 || $jsonData['fundacion'] > date('Y')){
+                $errores['fundacion'] = 'La fundacion debe ser entre 1800 y 2025';
+            }else{
+                $club->setFundacion($jsonData['fundacion']);
+            }
+        }
+        if(isset($jsonData['ciudad'])){
+            $club->setCiudad($jsonData['ciudad']);
+        }
+        if(isset($jsonData['estadio'])){
+            $club->setEstadio($jsonData['estadio']);
+        }
+        if(isset($jsonData['presupuesto'])){
+            if($jsonData['presupuesto'] <= 0){
+                $errores['presupuesto'] = 'El presupuesto no puede ser 0 o negativo';
+            }else{
+                $club->setPresupuesto($jsonData['presupuesto']);
+            }
+        }
         
+        // Verificar si hay errores y devolverlos
+        if(!empty($errores)){
+            return $this->json(['error' => $errores], 400);
+        }
+        
+        $entityManager->flush();
+
+        return $this->json(['message' => 'Club updated successfully']);
+    }
+
 }

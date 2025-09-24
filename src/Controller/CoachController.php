@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Controller;
 
@@ -168,12 +168,19 @@ class CoachController extends AbstractController
         if(isset($jsonData['nombre'])){
             $coach->setNombre($jsonData['nombre']);
         }
+        
         if(isset($jsonData['apellidos'])){
             $coach->setApellidos($jsonData['apellidos']);
         }
+        
         if(isset($jsonData['sueldo'])){
-            $coach->setSueldo($jsonData['sueldo']);
+            if($jsonData['sueldo'] <= 0){
+                return $this->json(['error' => 'El sueldo no puede ser 0 o negativo'], 400);
+            }else{
+                $coach->setSueldo($jsonData['sueldo']);
+            }
         }
+        
         if(isset($jsonData['id_club'])){
             $club = $entityManager->getRepository(Club::class)->find($jsonData['id_club']);
             if(!$club){
