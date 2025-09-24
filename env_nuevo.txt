@@ -1,0 +1,15 @@
+# Copia este contenido a tu archivo .env
+
+MAILER_DSN="gmail://iagofranciscoperez@gmail.com:wtbx vosk msbg mybk@default"
+MAILER_FROM_EMAIL=iagofranciscoperez@gmail.com
+APP_ENV=dev
+DATABASE_URL=mysql://root:@127.0.0.1:3306/futbol
+APP_SECRET=b2910016d7640be9967ff5bb8deed811
+
+# Instrucciones:
+# 1. Abre el archivo .env en tu editor
+# 2. Copia TODO el contenido de arriba (desde MAILER_DSN hasta APP_SECRET)
+# 3. Pega en el archivo .env
+# 4. Guarda el archivo
+# 5. Ejecuta: php bin/console cache:clear
+

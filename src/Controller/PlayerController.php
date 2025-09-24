@@ -112,16 +112,8 @@ class PlayerController extends AbstractController
         $entityManager->remove($player);
         $entityManager->flush();
 
-        //$this->sendEmailRemoved($player, $club);
-        /*
-            $email = (new Email())
-                ->from($_ENV['MAILER_FROM_EMAIL'])
-                ->to('iago.francisco@siweb.es')
-                ->subject('Jugador registrado - ' . $club->getNombre())
-                ->html('El jugador ' . $player->getNombre() . ' ' . $player->getApellidos(). ' ha sido dado de baja en el club ' . $club->getNombre());
-            
-            $mailer->send($email);
-        */
+        $this->sendEmailRemoved($player, $club);
+        
         return $this->json(['message' => 'Player deleted successfully']);
     }
 
@@ -181,16 +173,8 @@ class PlayerController extends AbstractController
         $entityManager->flush();
 
         //Enviamos el email
-        #$this->sendEmailRegistered($player, $club);
-        /*
-            $email = (new Email())
-                ->from($_ENV['MAILER_FROM_EMAIL'])
-                ->to('iago.francisco@siweb.es')
-                ->subject('Jugador registrado - ' . $club->getNombre())
-                ->html('El jugador ' . $player->getNombre() . ' ' . $player->getApellidos(). ' ha sido dado de alta en el club ' . $club->getNombre());
-
-            $mailer->send($email);
-        */
+        $this->sendEmailRegistered($player, $club);
+        
         //Devolvemos el mensaje de éxito
         return $this->json(['message' => 'Player created successfully']);
         
@@ -261,7 +245,7 @@ class PlayerController extends AbstractController
 
     }    
 
-/*
+
 
     public function sendEmailRemoved(Object $player, Object $club):Response
     {
@@ -320,5 +304,5 @@ class PlayerController extends AbstractController
             return $this->json(['error' => 'Error al enviar el email: ' . $e->getMessage()], 500);
         }
     }
-        */
+        
 }

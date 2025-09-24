@@ -1,0 +1,30 @@
+COPIAR ESTE CONTENIDO A UN ARCHIVO LLAMADO ".env"
+
+# Database Configuration
+DATABASE_URL="postgresql://app:!ChangeMe!@127.0.0.1:5432/app?serverVersion=16&charset=utf8"
+
+# Mailer Configuration - Gmail SMTP (sin verificación de dominio)
+MAILER_DSN=gmail://tu-email@gmail.com:tu-app-password@default
+MAILER_FROM_EMAIL=tu-email@gmail.com
+
+# Symfony Configuration
+APP_ENV=dev
+APP_SECRET=your-secret-key-here
+
+INSTRUCCIONES:
+=============
+
+1. Crea un archivo nuevo llamado exactamente ".env" (con el punto al inicio)
+2. Copia TODO el contenido de arriba (desde # Database Configuration hasta APP_SECRET=...)
+3. Reemplaza "tu-email@gmail.com" con tu email real de Gmail
+4. Reemplaza "tu-app-password" con la contraseña de aplicación de 16 caracteres
+
+EJEMPLO REAL:
+=============
+Si tu email es miguel@gmail.com y tu contraseña de aplicación es abcd-efgh-ijkl-mnop:
+
+MAILER_DSN=gmail://miguel@gmail.com:abcd-efgh-ijkl-mnop@default
+MAILER_FROM_EMAIL=miguel@gmail.com
+
+¡IMPORTANTE! El archivo debe llamarse exactamente ".env" (con el punto)
+
