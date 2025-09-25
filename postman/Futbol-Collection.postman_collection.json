@@ -1,0 +1,523 @@
+{
+	"info": {
+		"_postman_id": "57165712-4ff4-47df-baec-3d9644bd4654",
+		"name": "Futbol-Collection",
+		"description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48680273",
+		"_collection_link": "https://iagofranciscoperez-8018051.postman.co/workspace/Iago-Francisco-P%25C3%25A9rez's-Workspac~f2397794-7a9b-4c29-8f74-1dcf23feb8ff/collection/48680273-57165712-4ff4-47df-baec-3d9644bd4654?action=share&source=collection_link&creator=48680273"
+	},
+	"item": [
+		{
+			"name": "Players",
+			"item": [
+				{
+					"name": "GET",
+					"item": [
+						{
+							"name": "Listado-players (GET)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseURL}}/players",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"players"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Listado-players-filtros (GET))",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseURL}}/players?nombre=Iago",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"players"
+									],
+									"query": [
+										{
+											"key": "nombre",
+											"value": "Iago"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Listado-players-id (GET)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseURL}}/players/1",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"players",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Listado-players-paginado (GET)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseURL}}/players?pagina=1&pageSize=3",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"players"
+									],
+									"query": [
+										{
+											"key": "pagina",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "3"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "POST",
+					"item": [
+						{
+							"name": "Alta-players (POST-RAW-JSON)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"nombre\": \"prueba\",\r\n    \"apellidos\":\"apellidos prueba\",\r\n    \"dorsal\": \"9\",\r\n    \"salario\": \"2500\",\r\n    \"id_club\": \"CEL\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/players",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"players"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "DELETE",
+					"item": [
+						{
+							"name": "Delete-player (DELETE)",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseURL}}/players/42",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"players",
+										"42"
+									],
+									"query": [
+										{
+											"key": "pagina",
+											"value": "1",
+											"disabled": true
+										},
+										{
+											"key": "pageSize",
+											"value": "3",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "PUT",
+					"item": [
+						{
+							"name": "Update-player (RAW-JSON)",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dorsal\": \"5\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/players/43",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"players",
+										"43"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Clubs",
+			"item": [
+				{
+					"name": "GET",
+					"item": [
+						{
+							"name": "Listado-clubs (GET)",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"nombre\": \"prueba\",\r\n    \"apellidos\":\"apellidos prueba\",\r\n    \"dorsal\": \"9\",\r\n    \"salario\": \"2500\",\r\n    \"id_club\": \"CEL\"\r\n}"
+								},
+								"url": {
+									"raw": "{{baseURL}}/clubs",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"clubs"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Listado-clubs-id (GET)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseURL}}/clubs/1",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"clubs",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "POST",
+					"item": [
+						{
+							"name": "Alta-clubs (POST-RAW-JSON)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"id_club\": \"OFV\",\r\n    \"nombre\": \"Oliveira Futlbol Club\",\r\n    \"fundacion\": \"1969\",\r\n    \"ciudad\": \"Ponteareas\",\r\n    \"estadio\": \"O Rabel\",\r\n    \"presupuesto\": 1000\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/clubs",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"clubs"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "DELETE",
+					"item": [
+						{
+							"name": "Delete-clubs (DELETE)",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"id_club\": \"OFV\",\r\n    \"nombre\": \"Oliveira Futlbol Club\",\r\n    \"fundacion\": \"1969\",\r\n    \"ciudad\": \"Ponteareas\",\r\n    \"estadio\": \"O Rabel\",\r\n    \"presupuesto\": 1000\r\n}"
+								},
+								"url": {
+									"raw": "{{baseURL}}/clubs/9",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"clubs",
+										"9"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "PUT",
+					"item": [
+						{
+							"name": "New Request",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"presupuesto\": \"1000\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/clubs/OFC",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"clubs",
+										"OFC"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Coaches",
+			"item": [
+				{
+					"name": "GET",
+					"item": [
+						{
+							"name": "Listado-coaches (GET)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseURL}}/coaches",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"coaches"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Listado-coaches-id (GET)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseURL}}/coaches/9",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"coaches",
+										"9"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "New Request",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dni\": \"123456789R\",\r\n    \"nombre\": \"Nombre Entrenador\",\r\n    \"apellidos\": \"Apellifos Entrenador\",\r\n    \"salario\": \"1200\",\r\n    \"id_club\": \"OFC\"\r\n}"
+								},
+								"url": {
+									"raw": "{{baseURL}}/coaches?page=1&pageSize=2",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"coaches"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "2"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "POST",
+					"item": [
+						{
+							"name": "Alta-coach (POST-RAW-JSON)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dni\": \"123456789R\",\r\n    \"nombre\": \"Nombre Entrenador\",\r\n    \"apellidos\": \"Apellifos Entrenador\",\r\n    \"salario\": \"1200\",\r\n    \"id_club\": \"OFC\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/coaches",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"coaches"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "DELETE",
+					"item": [
+						{
+							"name": "Delete-coach (DELETE)",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \r\n}"
+								},
+								"url": {
+									"raw": "{{baseURL}}/coaches/8",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"coaches",
+										"8"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "PUT",
+					"item": [
+						{
+							"name": "Update-coach (PUT-RAW-JSON))",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n   \"nombre\": \"Prueba Entrenador\" \r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/coaches/9",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"coaches",
+										"9"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURL",
+			"value": "http://localhost:8000",
+			"type": "default"
+		}
+	]
+}

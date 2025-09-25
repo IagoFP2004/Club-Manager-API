@@ -203,34 +203,6 @@ class CoachController extends AbstractController
         ]);
     }
 
-    //Funcion para quitar un entrenador de su equipo
-    #[Route('/coaches/{id}/remove-from-team', name: 'coach_remove_from_team', methods: ['PATCH'])]
-    public function removeCoachFromTeam(EntityManagerInterface $entityManager, $id): Response
-    {
-        $coach = $entityManager->getRepository(Coach::class)->find($id);
-
-        if(!$coach){
-            return $this->json(['error' => 'Coach not found'], 404);
-        }
-
-        $clubAnterior = $coach->getClub();
-        $coach->setClub(null);
-        $entityManager->flush();
-
-        $mensaje = $clubAnterior 
-            ? "Entrenador removido del equipo " . $clubAnterior->getNombre()
-            : "El entrenador no estaba en ningún equipo";
-
-        return $this->json([
-            'message' => $mensaje,
-            'coach' => [
-                'id' => $coach->getId(),
-                'nombre' => $coach->getNombre(),
-                'apellidos' => $coach->getApellidos(),
-                'club' => null
-            ]
-        ]);
-    }
 
     //Funcion para actualizar un coach
     #[Route('/coaches/{id}', name: 'coach_update', methods: ['PUT'])]
