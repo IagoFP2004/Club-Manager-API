@@ -17,9 +17,18 @@ use Knp\Component\Pager\PaginatorInterface;
 
 class PlayerController extends AbstractController
 {
-    #[Route('/players', name: 'player_list', methods: ['GET'])]
+    #[Route('/players', name: 'player_list', methods: ['GET', 'OPTIONS'])]
     public function listPlayers(EntityManagerInterface $entityManager, PaginatorInterface $paginator, Request $request): Response
     {
+        // Manejar CORS preflight
+        if ($request->getMethod() === 'OPTIONS') {
+            return new Response('', 200, [
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+            ]);
+        }
+
         // Obtener todos los jugadores o filtrar por nombre
         $queryBuilder = $entityManager->getRepository(Player::class)->createQueryBuilder('p');
         
@@ -60,7 +69,7 @@ class PlayerController extends AbstractController
             ];
         }
 
-        return $this->json([
+        $response = $this->json([
             'players' => $data,
             'pagination' => [
                 'current_page' => $players->getCurrentPageNumber(),
@@ -73,6 +82,13 @@ class PlayerController extends AbstractController
                 'prev_page' => $players->getCurrentPageNumber() > 1 ? $players->getCurrentPageNumber() - 1 : null
             ]
         ]);
+        
+        // Añadir headers CORS
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        
+        return $response;
     }
 
     #[Route('/players/{id}', name: 'player_get', methods: ['GET'])]
