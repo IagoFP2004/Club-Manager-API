@@ -94,7 +94,7 @@ class CoachController extends AbstractController
         }
 
         // Verificar si el club existe
-        $club = $entityManager->getRepository(Club::class)->find($id_club);
+        $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id_club]);
         if (!$club) {
             $errores['id_club'] = 'El club no existe';
         } else {
@@ -183,7 +183,7 @@ class CoachController extends AbstractController
         }
         
         if(isset($jsonData['id_club'])){
-            $club = $entityManager->getRepository(Club::class)->find($jsonData['id_club']);
+            $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $jsonData['id_club']]);
             if(!$club){
                 return $this->json(['error' => 'El club no existe'], 400);
             }

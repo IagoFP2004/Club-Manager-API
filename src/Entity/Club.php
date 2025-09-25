@@ -14,6 +14,7 @@ class Club
 {
     #[ORM\Id]
     #[ORM\Column(length: 5)]
+    #[ORM\GeneratedValue(strategy: 'NONE')]
     private ?string $id_club = null;
 
     #[ORM\Column(length: 255)]

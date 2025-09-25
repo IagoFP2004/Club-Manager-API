@@ -112,7 +112,10 @@ class PlayerController extends AbstractController
         $entityManager->remove($player);
         $entityManager->flush();
 
-        $this->sendEmailRemoved($player, $club);
+        //Enviamos el email solo si hay club
+        if($club) {
+            $this->sendEmailRemoved($player, $club);
+        }
         
         return $this->json(['message' => 'Player deleted successfully']);
     }
@@ -137,21 +140,25 @@ class PlayerController extends AbstractController
         $id_club = $jsonData['id_club'] ?? null;
 
         //Todos los campos son requeridos si un campo falta lanza la alerta
-        if (empty($nombre) || empty($apellidos) || empty($dorsal) || empty($salario) || empty($id_club)) {
+        if (empty($nombre) || empty($apellidos) || empty($dorsal) || empty($salario)) {
             return $this->json(['error' => 'Todos los campos son requeridos'], 400);
         }
 
-        // Validar que el club existe
-        $club = $entityManager->getRepository(Club::class)->find($id_club);
-        if (!$club) {
-            return $this->json(['error' => 'Club not found'], 404);
-        }
-
-        //Guardamos los dorsales del club del jugador
-        $playersDelClub = $entityManager->getRepository(Player::class)->findBy(['club' => $club]);
+        // Validar que el club existe (si se proporciona)
+        $club = null;
         $dorsales = [];
-        foreach($playersDelClub as $p){
-            $dorsales[] = $p->getDorsal();
+        
+        if (!empty($id_club)) {
+            $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id_club]);
+            if (!$club) {
+                return $this->json(['error' => 'Club not found'], 404);
+            }
+            
+            //Guardamos los dorsales del club del jugador (solo si hay club)
+            $playersDelClub = $entityManager->getRepository(Player::class)->findBy(['club' => $club]);
+            foreach($playersDelClub as $p){
+                $dorsales[] = $p->getDorsal();
+            }
         }
 
         //Creamos al jugador y le asignamos los datos
@@ -160,7 +167,7 @@ class PlayerController extends AbstractController
         $player->setApellidos($apellidos);
         if($dorsal <= 0 || $dorsal> 99) {
             return $this->json(['error' => 'El dorsal debe ser mayor que 0 y menor que 100'], 400);
-        }else if(in_array($dorsal, $dorsales)){
+        }else if($club && in_array($dorsal, $dorsales)){
             return $this->json(['error' => 'El dorsal ya existe en el club'], 400);
         }else{
             $player->setDorsal($dorsal);
@@ -172,8 +179,10 @@ class PlayerController extends AbstractController
         $entityManager->persist($player);
         $entityManager->flush();
 
-        //Enviamos el email
-        $this->sendEmailRegistered($player, $club);
+        //Enviamos el email solo si hay club
+        if($club) {
+            $this->sendEmailRegistered($player, $club);
+        }
         
         //Devolvemos el mensaje de éxito
         return $this->json(['message' => 'Player created successfully']);
@@ -189,16 +198,6 @@ class PlayerController extends AbstractController
             return $this->json(['error' => 'Player not found'], 404);
         }
 
-        // Para ver todos los dorsales del club del jugador
-        $club = $player->getClub();
-        $playersDelClub = $entityManager->getRepository(Player::class)->findBy(['club' => $club]);
-        
-        //Guardamos los dorsales del club del jugador
-        $dorsales = [];
-        foreach($playersDelClub as $p){
-            $dorsales[] = $p->getDorsal();
-        }
-        
         //Obtenemos los datos del JSON
         $body = $request->getContent();
         $jsonData = json_decode($body, true);
@@ -207,7 +206,7 @@ class PlayerController extends AbstractController
             return $this->json(['error' => 'No hay datos para actualizar'], 400);
         }
 
-        //Hacemos validaciones
+        //Hacemos validaciones básicas
         if(isset($jsonData['dni'])){
             return $this->json(['error' => 'El DNI no puede ser modificado'], 400);
         }
@@ -217,28 +216,87 @@ class PlayerController extends AbstractController
         if(isset($jsonData['apellidos'])){
             $player->setApellidos($jsonData['apellidos']);
         }
-        if(isset($jsonData['dorsal'])){
-            if($jsonData['dorsal'] <= 0 || $jsonData['dorsal'] > 99) {
-                return $this->json(['error' => 'El dorsal debe ser mayor que 0 y menor que 100'], 400);
-            }else if(in_array($jsonData['dorsal'], $dorsales)){
-                return $this->json(['error' => 'El dorsal ya existe en el club'], 400);
-            }else{
-                $player->setDorsal($jsonData['dorsal']);
-            }
-        }
         if(isset($jsonData['salario'])){
             $player->setSalario($jsonData['salario']);
             if($jsonData['salario'] <= 0){
                 return $this->json(['error' => 'El salario no puede ser 0 o negativo'], 400);
             }
         }
+        
+        // Actualizar el club PRIMERO
         if(isset($jsonData['id_club'])){
-            $club = $entityManager->getRepository(Club::class)->find($jsonData['id_club']);
-            if(!$club){
-                return $this->json(['error' => 'Club not found'], 404);
+            if(empty($jsonData['id_club'])) {
+                // Si id_club está vacío, quitar el club del jugador
+                $player->setClub(null);
+            } else {
+                // Si id_club tiene valor, buscar y asignar el club
+                $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $jsonData['id_club']]);
+                if(!$club){
+                    return $this->json(['error' => 'Club not found'], 404);
+                }
+                
+                // VALIDAR DORSAL cuando se cambia el club
+                $dorsalActual = $player->getDorsal();
+                if($dorsalActual) {
+                    // Verificar si el dorsal actual ya existe en el nuevo club
+                    $playersDelNuevoClub = $entityManager->getRepository(Player::class)->findBy(['club' => $club]);
+                    $dorsalExiste = false;
+                    
+                    foreach($playersDelNuevoClub as $p){
+                        if($p->getId() !== $player->getId() && $p->getDorsal() == $dorsalActual){
+                            $dorsalExiste = true;
+                            break;
+                        }
+                    }
+                    
+                    if($dorsalExiste){
+                        return $this->json(['error' => 'El dorsal ' . $dorsalActual . ' ya existe en el club ' . $club->getNombre()], 400);
+                    }
+                }
+                
+                $player->setClub($club);
             }
-            $player->setClub($club);
         }
+        
+        // Ahora validar el dorsal con el club que se va a asignar
+        if(isset($jsonData['dorsal'])){
+            if($jsonData['dorsal'] <= 0 || $jsonData['dorsal'] > 99) {
+                return $this->json(['error' => 'El dorsal debe ser mayor que 0 y menor que 100'], 400);
+            }
+            
+            // Determinar qué club usar para la validación
+            $clubParaValidar = null;
+            
+            // Si se está actualizando el club, usar el nuevo club
+            if(isset($jsonData['id_club']) && !empty($jsonData['id_club'])) {
+                $clubParaValidar = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $jsonData['id_club']]);
+            } else {
+                // Si no se está actualizando el club, usar el club actual
+                $clubParaValidar = $player->getClub();
+            }
+            
+            if($clubParaValidar) {
+                // Verificar si el dorsal ya existe en otros jugadores del club
+                $playersDelClub = $entityManager->getRepository(Player::class)->findBy(['club' => $clubParaValidar]);
+                $dorsalExiste = false;
+                
+                foreach($playersDelClub as $p){
+                    if($p->getId() !== $player->getId() && $p->getDorsal() == $jsonData['dorsal']){
+                        $dorsalExiste = true;
+                        break;
+                    }
+                }
+                
+                if($dorsalExiste){
+                    return $this->json(['error' => 'El dorsal ya existe en el club'], 400);
+                }
+            }
+            
+            $player->setDorsal($jsonData['dorsal']);
+        }
+        
+        // Guardar los cambios en la base de datos
+        $entityManager->flush();
 
         //Devolvemos el mensaje de éxito
         return $this->json(['message' => 'Player updated successfully']);
@@ -247,7 +305,7 @@ class PlayerController extends AbstractController
 
 
 
-    public function sendEmailRemoved(Object $player, Object $club):Response
+    public function sendEmailRemoved(Object $player, ?Object $club):Response
     {
         $mail = new PHPMailer(true);
 
@@ -268,7 +326,8 @@ class PlayerController extends AbstractController
             //Contenido
             $mail->isHTML(true);
             $mail->Subject = 'Jugador eliminado';
-            $mail->Body = 'El jugador ' . $player->getNombre() . ' ' . $player->getApellidos() . ' ha sido eliminado del club ' . $club->getNombre();
+            $clubNombre = $club ? $club->getNombre() : 'Sin club';
+            $mail->Body = 'El jugador ' . $player->getNombre() . ' ' . $player->getApellidos() . ' ha sido dado de baja en el club ' . $clubNombre.' con el dorsal ' . '<br>'.$player->getDorsal().'<br>y con el salario ' . '<br>'.$player->getSalario();
             $mail->send();
             return $this->json(['message' => 'Email enviado correctamente']);
         }catch(Exception $e){
@@ -276,7 +335,7 @@ class PlayerController extends AbstractController
         }
     }
     
-    public function sendEmailRegistered(Object $player, Object $club):Response
+    public function sendEmailRegistered(Object $player, ?Object $club):Response
     {
         $mail = new PHPMailer(true);
 
@@ -296,8 +355,9 @@ class PlayerController extends AbstractController
 
             //Contenido
             $mail->isHTML(true);
-            $mail->Subject = 'Jugador registrado - ' . $club->getNombre();
-            $mail->Body = 'El jugador ' . $player->getNombre() . ' ' . $player->getApellidos() . ' ha sido dado de alta en el club ' . $club->getNombre();
+            $clubNombre = $club ? $club->getNombre() : 'Sin club';
+            $mail->Subject = 'Jugador registrado - ' . $clubNombre;
+            $mail->Body = 'El jugador ' . $player->getNombre() . ' ' . $player->getApellidos() . ' ha sido dado de alta en el club ' . $clubNombre.' con el dorsal ' . '<br>'.$player->getDorsal().'<br>y con el salario ' . '<br>'.$player->getSalario();
             $mail->send();
             return $this->json(['message' => 'Email enviado correctamente']);
         } catch(Exception $e) {

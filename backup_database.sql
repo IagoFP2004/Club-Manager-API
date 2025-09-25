@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS coach (
     dni VARCHAR(9) NOT NULL,
     nombre VARCHAR(255) NOT NULL,
     apellidos VARCHAR(255) NOT NULL,
-    sueldo VARCHAR(255) NOT NULL,
+    salario VARCHAR(255) NOT NULL,
     id_club VARCHAR(5) DEFAULT NULL,
     PRIMARY KEY (id),
     INDEX IDX_3B5966CC33CE2470 (id_club),

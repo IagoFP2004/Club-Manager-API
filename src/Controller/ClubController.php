@@ -55,7 +55,7 @@ class ClubController extends AbstractController
     #[Route('/clubs/{id}', name: 'club_get', methods: ['GET'])]
     public function getClub(EntityManagerInterface $entityManager, $id): Response
     {
-        $club = $entityManager->getRepository(Club::class)->find($id);
+        $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id]);
 
         if(!$club){
             return $this->json(['error' => 'Club not found'], 404);
@@ -90,7 +90,7 @@ class ClubController extends AbstractController
     #[Route('/clubs/{id}', name: 'club_delete', methods: ['DELETE'])]
     public function deleteClub(EntityManagerInterface $entityManager, $id): Response
     {
-        $club = $entityManager->getRepository(Club::class)->find($id);
+        $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id]);
         
         if(!$club){
             return $this->json(['error' => 'Club not found'], 404);
@@ -173,7 +173,7 @@ class ClubController extends AbstractController
     #[Route('/clubs/{id}', name: 'club_update', methods: ['PUT'])]
     public function updateClub(EntityManagerInterface $entityManager, $id, Request $request): Response
     {
-        $club = $entityManager->getRepository(Club::class)->find($id);
+        $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id]);
         
         if(!$club){
             return $this->json(['error' => 'Club not found'], 404);
