@@ -213,6 +213,54 @@ class ClubController extends AbstractController
                 $club->setPresupuesto($jsonData['presupuesto']);
             }
         }
+
+        // Manejar el campo entrenador
+        if(isset($jsonData['entrenador']) || isset($jsonData['Entrenador']) || isset($jsonData['ENTRENADOR'])){
+            $entrenador = $jsonData['entrenador'] ?? $jsonData['Entrenador'] ?? $jsonData['ENTRENADOR'];
+            
+            if(empty($entrenador) || $entrenador === "null" || $entrenador === null) {
+                // Si entrenador está vacío o es "null", quitar el entrenador del club
+                $coachActual = $entityManager->getRepository(Coach::class)->findOneBy(['club' => $club]);
+                if($coachActual) {
+                    $coachActual->setClub(null);
+                }
+            } else {
+                // Si entrenador tiene valor, buscar y asignar el entrenador
+                $coach = $entityManager->getRepository(Coach::class)->createQueryBuilder('c')
+                    ->where('c.nombre LIKE :name OR c.apellidos LIKE :name OR CONCAT(c.nombre, \' \', c.apellidos) LIKE :name')
+                    ->setParameter('name', '%' . $entrenador . '%')
+                    ->getQuery()
+                    ->getResult();
+
+                if(empty($coach)){
+                    $errores['entrenador'] = 'No se encontró ningún entrenador con ese nombre';
+                } else if(count($coach) > 1){
+                    $errores['entrenador'] = 'Se encontraron múltiples entrenadores con ese nombre. Especifica más detalles.';
+                } else {
+                    $coachEncontrado = $coach[0];
+                    
+                    // Verificar si el club ya tiene un entrenador
+                    $existingCoach = $entityManager->getRepository(Coach::class)->findOneBy(['club' => $club]);
+                    if($existingCoach && $existingCoach->getId() !== $coachEncontrado->getId()){
+                        $errores['entrenador'] = 'Este club ya tiene un entrenador asignado';
+                    }
+                    
+                    // Verificar si el entrenador ya está en otro club
+                    if($coachEncontrado->getClub() && $coachEncontrado->getClub()->getIdClub() !== $club->getIdClub()){
+                        $errores['entrenador'] = 'Este entrenador ya está asignado a otro club';
+                    }
+                    
+                    if(empty($errores['entrenador'])) {
+                        // Quitar el entrenador actual del club si existe
+                        if($existingCoach) {
+                            $existingCoach->setClub(null);
+                        }
+                        // Asignar el nuevo entrenador
+                        $coachEncontrado->setClub($club);
+                    }
+                }
+            }
+        }
         
         // Verificar si hay errores y devolverlos
         if(!empty($errores)){

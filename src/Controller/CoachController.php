@@ -29,12 +29,14 @@ class CoachController extends AbstractController
         // Convertir entidades a arrays para serialización
         $coachesData = [];
         foreach ($coaches as $coach) {
+            $club = $coach->getClub();
             $coachesData[] = [
                 'id' => $coach->getId(),
                 'dni' => $coach->getDni(),
                 'nombre' => $coach->getNombre(),
                 'apellidos' => $coach->getApellidos(),
-                'salario' => $coach->getSalario()
+                'salario' => $coach->getSalario(),
+                'club' => $club ? $club->getNombre() : "Sin club"
             ];
         }
         
@@ -43,21 +45,22 @@ class CoachController extends AbstractController
         ]);
     }
 
-    #[Route('/coaches/{dni}', name: 'coach_get', methods: ['GET'])]
-    public function getCoach(EntityManagerInterface $entityManager, $dni): Response
+    #[Route('/coaches/{id}', name: 'coach_get', methods: ['GET'])]
+    public function getCoach(EntityManagerInterface $entityManager, $id): Response
     {
-        $coach = $entityManager->getRepository(Coach::class)->findOneBy(['dni' => $dni]);
+        $coach = $entityManager->getRepository(Coach::class)->find($id);
 
         if(!$coach){
             return $this->json(['error' => 'Coach not found'], 404);
         }
 
+        $club = $coach->getClub();
         $data = [
             'dni' => $coach->getDni(),
             'nombre' => $coach->getNombre(),
             'apellidos' => $coach->getApellidos(),
             'salario' => $coach->getSalario(),
-            'club' => $coach->getClub()->getNombre()
+            'club' => $club ? $club->getNombre() : "Sin club"
         ];
 
         return $this->json($data);
@@ -76,14 +79,14 @@ class CoachController extends AbstractController
             return $this->json(['error' => 'JSON inválido'], 400);
         }
 
-        $dni = $data['dni'] ?? null;
-        $nombre = $data['nombre'] ?? null;
-        $apellidos = $data['apellidos'] ?? null;
-        $salario = $data['salario'] ?? null;
-        $id_club = $data['id_club'] ?? null;
+        $dni = $data['dni'] ?? $data['Dni'] ?? $data['DNI'] ?? null;
+        $nombre = $data['nombre'] ?? $data['Nombre'] ?? $data['NOMBRE'] ?? null;
+        $apellidos = $data['apellidos'] ?? $data['Apellidos'] ?? $data['APELLIDOS'] ?? null;
+        $salario = $data['salario'] ?? $data['Salario'] ?? $data['SALARIO'] ?? null;
+        $id_club = $data['id_club'] ?? $data['Id_club'] ?? $data['ID_CLUB'] ?? null;
 
-        // Verificar que todos los campos estén presentes
-        if (empty($dni) || empty($nombre) || empty($apellidos) || empty($salario) || empty($id_club)) {
+        // Verificar que todos los campos estén presentes (id_club es opcional)
+        if (empty($dni) || empty($nombre) || empty($apellidos) || empty($salario)) {
             return $this->json(['error' => 'Todos los campos son requeridos'], 400);
         }
 
@@ -93,15 +96,18 @@ class CoachController extends AbstractController
             $errores['dni'] = 'El DNI ya existe';
         }
 
-        // Verificar si el club existe
-        $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id_club]);
-        if (!$club) {
-            $errores['id_club'] = 'El club no existe';
-        } else {
-            // Verificar si el club ya tiene un entrenador
-            $existingCoachInClub = $entityManager->getRepository(Coach::class)->findOneBy(['club' => $club]);
-            if ($existingCoachInClub) {
-                $errores['id_club'] = 'Este club ya tiene un entrenador asignado';
+        // Verificar si el club existe (solo si se proporciona)
+        $club = null;
+        if (!empty($id_club)) {
+            $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id_club]);
+            if (!$club) {
+                $errores['id_club'] = 'El club no existe';
+            } else {
+                // Verificar si el club ya tiene un entrenador
+                $existingCoachInClub = $entityManager->getRepository(Coach::class)->findOneBy(['club' => $club]);
+                if ($existingCoachInClub) {
+                    $errores['id_club'] = 'Este club ya tiene un entrenador asignado';
+                }
             }
         }
 
@@ -126,10 +132,10 @@ class CoachController extends AbstractController
     }
 
     //Funcion para eliminar un coach
-    #[Route('/coaches/{dni}', name: 'coach_delete', methods: ['DELETE'])]
-    public function deleteCoach(EntityManagerInterface $entityManager, $dni): Response
+    #[Route('/coaches/{id}', name: 'coach_delete', methods: ['DELETE'])]
+    public function deleteCoach(EntityManagerInterface $entityManager, $id): Response
     {
-        $coach = $entityManager->getRepository(Coach::class)->findOneBy(['dni' => $dni]);
+        $coach = $entityManager->getRepository(Coach::class)->find($id);
 
         if(!$coach){
             return $this->json(['error' => 'Coach not found'], 404);
@@ -143,11 +149,40 @@ class CoachController extends AbstractController
         ]);
     }
 
-    //Funcion para actualizar un coach
-    #[Route('/coaches/{dni}', name: 'coach_update', methods: ['PUT'])]
-    public function updateCoach(EntityManagerInterface $entityManager, $dni, Request $request): Response
+    //Funcion para quitar un entrenador de su equipo
+    #[Route('/coaches/{id}/remove-from-team', name: 'coach_remove_from_team', methods: ['PATCH'])]
+    public function removeCoachFromTeam(EntityManagerInterface $entityManager, $id): Response
     {
-        $coach = $entityManager->getRepository(Coach::class)->findOneBy(['dni' => $dni]);
+        $coach = $entityManager->getRepository(Coach::class)->find($id);
+
+        if(!$coach){
+            return $this->json(['error' => 'Coach not found'], 404);
+        }
+
+        $clubAnterior = $coach->getClub();
+        $coach->setClub(null);
+        $entityManager->flush();
+
+        $mensaje = $clubAnterior 
+            ? "Entrenador removido del equipo " . $clubAnterior->getNombre()
+            : "El entrenador no estaba en ningún equipo";
+
+        return $this->json([
+            'message' => $mensaje,
+            'coach' => [
+                'id' => $coach->getId(),
+                'nombre' => $coach->getNombre(),
+                'apellidos' => $coach->getApellidos(),
+                'club' => null
+            ]
+        ]);
+    }
+
+    //Funcion para actualizar un coach
+    #[Route('/coaches/{id}', name: 'coach_update', methods: ['PUT'])]
+    public function updateCoach(EntityManagerInterface $entityManager, $id, Request $request): Response
+    {
+        $coach = $entityManager->getRepository(Coach::class)->find($id);
         
         if(!$coach){
             return $this->json(['error' => 'Coach not found'], 404);
@@ -161,40 +196,51 @@ class CoachController extends AbstractController
         }
 
         // Verificar si se intenta cambiar el DNI
-        if(isset($jsonData['dni'])){
+        if(isset($jsonData['dni']) || isset($jsonData['Dni']) || isset($jsonData['DNI'])){
             return $this->json(['error' => 'El DNI no puede ser modificado'], 400);
         }
 
         // Actualizar campos si están presentes
-        if(isset($jsonData['nombre'])){
-            $coach->setNombre($jsonData['nombre']);
+        if(isset($jsonData['nombre']) || isset($jsonData['Nombre']) || isset($jsonData['NOMBRE'])){
+            $nombre = $jsonData['nombre'] ?? $jsonData['Nombre'] ?? $jsonData['NOMBRE'];
+            $coach->setNombre($nombre);
         }
         
-        if(isset($jsonData['apellidos'])){
-            $coach->setApellidos($jsonData['apellidos']);
+        if(isset($jsonData['apellidos']) || isset($jsonData['Apellidos']) || isset($jsonData['APELLIDOS'])){
+            $apellidos = $jsonData['apellidos'] ?? $jsonData['Apellidos'] ?? $jsonData['APELLIDOS'];
+            $coach->setApellidos($apellidos);
         }
         
-        if(isset($jsonData['salario'])){
-            if($jsonData['salario'] <= 0){
+        if(isset($jsonData['salario']) || isset($jsonData['Salario']) || isset($jsonData['SALARIO'])){
+            $salario = $jsonData['salario'] ?? $jsonData['Salario'] ?? $jsonData['SALARIO'];
+            if($salario <= 0){
                 return $this->json(['error' => 'El salario no puede ser 0 o negativo'], 400);
             }else{
-                $coach->setSalario($jsonData['salario']);
+                $coach->setSalario($salario);
             }
         }
         
-        if(isset($jsonData['id_club'])){
-            $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $jsonData['id_club']]);
-            if(!$club){
-                return $this->json(['error' => 'El club no existe'], 400);
-            }
+        if(isset($jsonData['id_club']) || isset($jsonData['Id_club']) || isset($jsonData['ID_CLUB'])){
+            $id_club = $jsonData['id_club'] ?? $jsonData['Id_club'] ?? $jsonData['ID_CLUB'];
             
-            // Verificar si el club ya tiene otro entrenador (excluyendo el actual)
-            $existingCoachInClub = $entityManager->getRepository(Coach::class)->findOneBy(['club' => $club]);
-            if($existingCoachInClub && $existingCoachInClub->getDni() !== $dni){
-                return $this->json(['error' => 'Este club ya tiene un entrenador asignado'], 400);
+            if(empty($id_club)) {
+                // Si id_club está vacío, quitar el club del entrenador
+                $coach->setClub(null);
+            } else {
+                // Si id_club tiene valor, buscar y asignar el club
+                $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id_club]);
+                if(!$club){
+                    return $this->json(['error' => 'El club no existe'], 400);
+                }
+                
+                // Verificar si el club ya tiene otro entrenador (excluyendo el actual)
+                $existingCoachInClub = $entityManager->getRepository(Coach::class)->findOneBy(['club' => $club]);
+                if($existingCoachInClub && $existingCoachInClub->getId() !== $id){
+                    return $this->json(['error' => 'Este club ya tiene un entrenador asignado'], 400);
+                }
+                
+                $coach->setClub($club);
             }
-            
-            $coach->setClub($club);
         }
 
         $entityManager->flush();
