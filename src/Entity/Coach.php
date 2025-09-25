@@ -26,7 +26,7 @@ class Coach
     #[ORM\Column(length: 255)]
     private ?string $salario = null;
 
-    #[ORM\ManyToOne(targetEntity: Club::class)]
+    #[ORM\ManyToOne(targetEntity: Club::class, inversedBy: 'coaches')]
     #[ORM\JoinColumn(name: 'id_club', referencedColumnName: 'id_club')]
     private ?Club $club = null;
 

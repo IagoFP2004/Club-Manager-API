@@ -9,20 +9,57 @@ use Symfony\Component\HttpFoundation\Request;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Coach;
 use App\Entity\Club;
+use Knp\Component\Pager\PaginatorInterface;
 
 class CoachController extends AbstractController
 {
     //Funcion que muestra el listado
-    #[Route('/coaches', name: 'coach_list', methods: ['GET'])]
-    public function listCoaches(EntityManagerInterface $entityManager): Response
+    #[Route('/coaches', name: 'coach_list', methods: ['GET', 'OPTIONS'])]
+    public function listCoaches(EntityManagerInterface $entityManager, PaginatorInterface $paginator, Request $request): Response
     {
-        $coaches = $entityManager->getRepository(Coach::class)->findAll();
+        // Manejar CORS preflight
+        if ($request->getMethod() === 'OPTIONS') {
+            return new Response('', 200, [
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+            ]);
+        }
+
+        // Obtener todos los coaches o filtrar por nombre
+        $queryBuilder = $entityManager->getRepository(Coach::class)->createQueryBuilder('c');
+        
+        $nombre = $request->query->get('nombre');
+        
+        if($nombre){
+            $queryBuilder->where('c.nombre LIKE :nombre')
+                        ->setParameter('nombre', '%' . $nombre . '%');
+        }
+        
+        $query = $queryBuilder->getQuery();
+        
+        // Paginar los resultados
+        $coaches = $paginator->paginate(
+            $query,
+            $request->query->getInt('page', 1), // página actual
+            $request->query->getInt('pageSize', 10) // elementos por página
+        );
         
         // Si no hay coaches, devolver array vacío con mensaje
-        if (empty($coaches)) {
+        if (!$coaches || $coaches->getTotalItemCount() === 0) {
             return $this->json([
                 'coaches' => [],
                 'message' => 'No hay coaches registrados',
+                'pagination' => [
+                    'current_page' => 1,
+                    'per_page' => 10,
+                    'total_items' => 0,
+                    'total_pages' => 0,
+                    'has_next_page' => false,
+                    'has_prev_page' => false,
+                    'next_page' => null,
+                    'prev_page' => null
+                ]
             ]);
         }
         
@@ -40,9 +77,26 @@ class CoachController extends AbstractController
             ];
         }
         
-        return $this->json([
+        $response = $this->json([
             'coaches' => $coachesData,
+            'pagination' => [
+                'current_page' => $coaches->getCurrentPageNumber(),
+                'per_page' => $coaches->getItemNumberPerPage(),
+                'total_items' => $coaches->getTotalItemCount(),
+                'total_pages' => $coaches->getPageCount(),
+                'has_next_page' => $coaches->getCurrentPageNumber() < $coaches->getPageCount(),
+                'has_prev_page' => $coaches->getCurrentPageNumber() > 1,
+                'next_page' => $coaches->getCurrentPageNumber() < $coaches->getPageCount() ? $coaches->getCurrentPageNumber() + 1 : null,
+                'prev_page' => $coaches->getCurrentPageNumber() > 1 ? $coaches->getCurrentPageNumber() - 1 : null
+            ]
         ]);
+        
+        // Añadir headers CORS
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        
+        return $response;
     }
 
     #[Route('/coaches/{id}', name: 'coach_get', methods: ['GET'])]

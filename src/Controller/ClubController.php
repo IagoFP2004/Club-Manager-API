@@ -10,13 +10,40 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Club;
 use App\Entity\Player;
 use App\Entity\Coach;
+use Knp\Component\Pager\PaginatorInterface;
 
 class ClubController extends AbstractController
 {
-    #[Route('/clubs', name: 'club_list', methods: ['GET'])]
-    public function listClubs(EntityManagerInterface $entityManager): Response
+    #[Route('/clubs', name: 'club_list', methods: ['GET', 'OPTIONS'])]
+    public function listClubs(EntityManagerInterface $entityManager, PaginatorInterface $paginator, Request $request): Response
     {
-        $clubs = $entityManager->getRepository(Club::class)->findAll();
+        // Manejar CORS preflight
+        if ($request->getMethod() === 'OPTIONS') {
+            return new Response('', 200, [
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+            ]);
+        }
+
+        // Obtener todos los clubs o filtrar por nombre
+        $queryBuilder = $entityManager->getRepository(Club::class)->createQueryBuilder('c');
+        
+        $nombre = $request->query->get('nombre');
+        
+        if($nombre){
+            $queryBuilder->where('c.nombre LIKE :nombre')
+                        ->setParameter('nombre', '%' . $nombre . '%');
+        }
+        
+        $query = $queryBuilder->getQuery();
+        
+        // Paginar los resultados
+        $clubs = $paginator->paginate(
+            $query,
+            $request->query->getInt('page', 1), // página actual
+            $request->query->getInt('pageSize', 10) // elementos por página
+        );
 
         if(!$clubs){
             return $this->json(['message' => 'No hay clubs registrados'], 400);
@@ -38,6 +65,7 @@ class ClubController extends AbstractController
             }
 
             $data[] = [
+                'id' => $club->getId(),
                 'id_club' => $club->getIdClub(),
                 'nombre' => $club->getNombre(),
                 'fundacion' => $club->getFundacion(),
@@ -49,13 +77,32 @@ class ClubController extends AbstractController
             ];
         }
 
-        return $this->json(['clubs' => $data]);
+        $response = $this->json([
+            'clubs' => $data,
+            'pagination' => [
+                'current_page' => $clubs->getCurrentPageNumber(),
+                'per_page' => $clubs->getItemNumberPerPage(),
+                'total_items' => $clubs->getTotalItemCount(),
+                'total_pages' => $clubs->getPageCount(),
+                'has_next_page' => $clubs->getCurrentPageNumber() < $clubs->getPageCount(),
+                'has_prev_page' => $clubs->getCurrentPageNumber() > 1,
+                'next_page' => $clubs->getCurrentPageNumber() < $clubs->getPageCount() ? $clubs->getCurrentPageNumber() + 1 : null,
+                'prev_page' => $clubs->getCurrentPageNumber() > 1 ? $clubs->getCurrentPageNumber() - 1 : null
+            ]
+        ]);
+        
+        // Añadir headers CORS
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        
+        return $response;
     }
 
     #[Route('/clubs/{id}', name: 'club_get', methods: ['GET'])]
     public function getClub(EntityManagerInterface $entityManager, $id): Response
     {
-        $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id]);
+        $club = $entityManager->getRepository(Club::class)->findOneBy(['id' => $id]);
 
         if(!$club){
             return $this->json(['error' => 'Club not found'], 404);
@@ -74,6 +121,7 @@ class ClubController extends AbstractController
         }
 
         $data = [
+            'id' => $club->getId(),
             'id_club' => $club->getIdClub(),
             'nombre' => $club->getNombre(),
             'fundacion' => $club->getFundacion(),
@@ -90,7 +138,7 @@ class ClubController extends AbstractController
     #[Route('/clubs/{id}', name: 'club_delete', methods: ['DELETE'])]
     public function deleteClub(EntityManagerInterface $entityManager, $id): Response
     {
-        $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id]);
+        $club = $entityManager->getRepository(Club::class)->findOneBy(['id' => $id]);
         
         if(!$club){
             return $this->json(['error' => 'Club not found'], 404);
@@ -173,7 +221,7 @@ class ClubController extends AbstractController
     #[Route('/clubs/{id}', name: 'club_update', methods: ['PUT'])]
     public function updateClub(EntityManagerInterface $entityManager, $id, Request $request): Response
     {
-        $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id]);
+        $club = $entityManager->getRepository(Club::class)->findOneBy(['id' => $id]);
         
         if(!$club){
             return $this->json(['error' => 'Club not found'], 404);

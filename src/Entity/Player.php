@@ -15,6 +15,8 @@ class Player
     #[ORM\Column]
     private ?int $id = null;
 
+    
+
     #[ORM\Column(length: 255)]
     private ?string $nombre = null;
 
@@ -27,7 +29,7 @@ class Player
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 0)]
     private ?string $salario = null;
 
-    #[ORM\ManyToOne(targetEntity: Club::class)]
+    #[ORM\ManyToOne(targetEntity: Club::class, inversedBy: 'players')]
     #[ORM\JoinColumn(name: 'id_club', referencedColumnName: 'id_club')]
     private ?Club $club = null;
 
