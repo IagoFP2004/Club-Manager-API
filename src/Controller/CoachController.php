@@ -110,6 +110,7 @@ class CoachController extends AbstractController
 
         $club = $coach->getClub();
         $data = [
+            'id' => $coach->getId(),
             'dni' => $coach->getDni(),
             'nombre' => $coach->getNombre(),
             'apellidos' => $coach->getApellidos(),

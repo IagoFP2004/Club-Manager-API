@@ -132,7 +132,7 @@ class ClubController extends AbstractController
             'jugadores' => !empty($jugadores) ? $jugadores : 'Sin jugadores'
         ];
 
-        return $this->json(['club' => $data]);
+        return $this->json($data);
     }
 
     #[Route('/clubs/{id}', name: 'club_delete', methods: ['DELETE'])]
@@ -144,6 +144,19 @@ class ClubController extends AbstractController
             return $this->json(['error' => 'Club not found'], 404);
         }
 
+        // Primero desasociar todos los entrenadores del club
+        $coaches = $entityManager->getRepository(Coach::class)->findBy(['club' => $club]);
+        foreach($coaches as $coach) {
+            $coach->setClub(null);
+        }
+
+        // Desasociar todos los jugadores del club
+        $players = $entityManager->getRepository(Player::class)->findBy(['club' => $club]);
+        foreach($players as $player) {
+            $player->setClub(null);
+        }
+
+        // Ahora eliminar el club
         $entityManager->remove($club);
         $entityManager->flush();
 

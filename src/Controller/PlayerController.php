@@ -102,6 +102,7 @@ class PlayerController extends AbstractController
         }
 
         $data = [
+            'id' => $player->getId(),
             'nombre' => $player->getNombre(),
             'apellidos' => $player->getApellidos(),
             'dorsal' => $player->getDorsal(),
@@ -175,7 +176,14 @@ class PlayerController extends AbstractController
             foreach($playersDelClub as $p){
                 $dorsales[] = $p->getDorsal();
             }
+
+            $existeJugador = $entityManager->getRepository(Player::class)->findOneBy(['nombre' => $nombre, 'apellidos' => $apellidos]);
+            if($existeJugador){
+                return $this->json(['error' => 'El jugador ya existe en el club'], 400);
+            }
         }
+
+
 
         //Creamos al jugador y le asignamos los datos
         $player = new Player();
