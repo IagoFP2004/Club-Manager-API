@@ -203,8 +203,11 @@ class PlayerController extends AbstractController
         $entityManager->persist($player);
         $entityManager->flush();
 
-        //Enviamos el email solo si hay club
+        // Actualizar presupuesto del club automáticamente
         if($club) {
+            $club->guardarNuevoPresupuesto();
+            $entityManager->persist($club);
+            $entityManager->flush();
             $this->sendEmailRegistered($player, $club);
         }
         
@@ -321,6 +324,13 @@ class PlayerController extends AbstractController
         
         // Guardar los cambios en la base de datos
         $entityManager->flush();
+
+        // Actualizar presupuesto del club automáticamente
+        if($player->getClub()) {
+            $player->getClub()->guardarNuevoPresupuesto();
+            $entityManager->persist($player->getClub());
+            $entityManager->flush();
+        }
 
         //Devolvemos el mensaje de éxito
         return $this->json(['message' => 'Player updated successfully']);

@@ -183,4 +183,38 @@ class Club
 
         return $this;
     }
+
+    public function getGastoJugadores(): float
+    {
+        $gastos = 0;
+        
+        foreach($this->players as $player) {
+            $gastos += (float)$player->getSalario();
+        }
+        
+        return $gastos;
+    }
+
+    public function getGastosEntrenadores(): float
+    {
+        $gastos = 0;
+        
+        foreach($this->coaches as $coach) {
+            $gastos += (float)$coach->getSalario();
+        }
+        
+        return $gastos;
+    }
+
+    function getPresupuestoRestante(): float
+    {
+        return (float)$this->presupuesto - $this->getGastoJugadores() - $this->getGastosEntrenadores();
+    }
+    
+    function guardarNuevoPresupuesto():void
+    {
+        $nuevoPresupuesto = $this->getPresupuestoRestante();
+        $this->presupuesto = (string)$nuevoPresupuesto; // ← Actualizar el presupuesto total
+        error_log("Presupuesto actualizado a: " . $nuevoPresupuesto . " para club " . $this->getNombre());
+    }
 }

@@ -217,6 +217,8 @@ class ClubController extends AbstractController
             return $this->json(['error' => $errores], 400);
         }
 
+        $this->actualizarPresupuesto($entityManager, $id_club, $club->gastoJugadores(), $club->gastoEntrenadores());
+
         $club = new Club();
         $club->setIdClub($id_club);
         $club->setNombre($nombre);
@@ -331,6 +333,13 @@ class ClubController extends AbstractController
         $entityManager->flush();
 
         return $this->json(['message' => 'Club updated successfully']);
+    }
+
+    public function actualizarPresupuesto(EntityManagerInterface $entityManager, $id, $gastoJ, $gastoE): void
+    {
+        $club = $entityManager->getRepository(Club::class)->findOneBy(['id' => $id]);
+        $club->setPresupuesto($club->getPresupuesto() - $gastoJ - $gastoE);
+        $entityManager->flush();
     }
 
 }
