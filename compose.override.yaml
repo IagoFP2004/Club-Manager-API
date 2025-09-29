@@ -2,8 +2,7 @@
 services:
 ###> doctrine/doctrine-bundle ###
   database:
-    ports:
-      - "5432"
+    # MySQL port is already exposed in compose.yaml
 ###< doctrine/doctrine-bundle ###
 
 ###> symfony/mailer ###
