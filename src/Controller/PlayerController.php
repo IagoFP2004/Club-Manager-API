@@ -62,7 +62,7 @@ class PlayerController extends AbstractController
                 'apellidos' => $player->getApellidos(),
                 'dorsal' => $player->getDorsal(),
                 'salario' => $player->getSalario(),
-                'club' => $player->getClub() ? $player->getClub()->getNombre() : null,
+                'club' => $player->getClub() ? $player->getClub()->getNombre() : 'Sin club',
                 'entrenador' => $player->getClub() && $player->getClub()->getCoaches()->count() > 0 
                     ? $player->getClub()->getCoaches()->first()->getNombre() . ' ' . $player->getClub()->getCoaches()->first()->getApellidos()
                     : 'Sin entrenador'

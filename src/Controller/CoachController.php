@@ -43,7 +43,7 @@ class CoachController extends AbstractController
         $coaches = $paginator->paginate(
             $query,
             $request->query->getInt('page', 1), // página actual
-            $request->query->getInt('pageSize', 10) // elementos por página
+            $request->query->getInt('pageSize', 5) // elementos por página
         );
         
         // Si no hay coaches, devolver array vacío con mensaje

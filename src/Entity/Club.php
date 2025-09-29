@@ -36,10 +36,10 @@ class Club
     #[ORM\Column(type: Types::DECIMAL, precision: 15, scale: 2)]
     private ?string $presupuesto = null;
 
-    #[ORM\OneToMany(mappedBy: 'club', targetEntity: Player::class)]
+    #[ORM\OneToMany(mappedBy: 'club', targetEntity: Player::class, fetch: 'EAGER')]
     private Collection $players;
 
-    #[ORM\OneToMany(mappedBy: 'club', targetEntity: Coach::class)]
+    #[ORM\OneToMany(mappedBy: 'club', targetEntity: Coach::class, fetch: 'EAGER')]
     private Collection $coaches;
 
     public function __construct()
