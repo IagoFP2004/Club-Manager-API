@@ -5,6 +5,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Coach;
@@ -73,7 +74,7 @@ class CoachController extends AbstractController
                 'nombre' => $coach->getNombre(),
                 'apellidos' => $coach->getApellidos(),
                 'salario' => $coach->getSalario(),
-                'club' => $club ? $club->getNombre() : "Sin club"
+                'id_club' => $club?->getIdClub()  // Usar la variable $club que ya tienes
             ];
         }
         
@@ -115,7 +116,7 @@ class CoachController extends AbstractController
             'nombre' => $coach->getNombre(),
             'apellidos' => $coach->getApellidos(),
             'salario' => $coach->getSalario(),
-            'club' => $club ? $club->getNombre() : "Sin club"
+            'id_club' => $coach->getClub()?->getIdClub()
         ];
 
         return $this->json($data);
@@ -209,10 +210,10 @@ class CoachController extends AbstractController
 
     //Funcion para actualizar un coach
     #[Route('/coaches/{id}', name: 'coach_update', methods: ['PUT'])]
-    public function updateCoach(EntityManagerInterface $entityManager, $id, Request $request): Response
+    public function updateCoach(EntityManagerInterface $entityManager, $id, Request $request): JsonResponse
     {
-        $coach = $entityManager->getRepository(Coach::class)->find($id);
         
+        $coach = $entityManager->getRepository(Coach::class)->find($id);
         if(!$coach){
             return $this->json(['error' => 'Coach not found'], 404);
         }
@@ -223,10 +224,15 @@ class CoachController extends AbstractController
         if(!$jsonData){
             return $this->json(['error' => 'JSON inválido'], 400);
         }
-
+        
         // Verificar si se intenta cambiar el DNI
         if(isset($jsonData['dni']) || isset($jsonData['Dni']) || isset($jsonData['DNI'])){
-            return $this->json(['error' => 'El DNI no puede ser modificado'], 400);
+            $dniEnviado = $jsonData['dni'] ?? $jsonData['Dni'] ?? $jsonData['DNI'];
+            $dniActual = $coach->getDni();
+            
+            if($dniEnviado !== $dniActual){
+                return $this->json(['error' => 'El DNI no puede ser modificado'], 400);
+            }
         }
 
         // Actualizar campos si están presentes
@@ -252,7 +258,7 @@ class CoachController extends AbstractController
         if(isset($jsonData['id_club']) || isset($jsonData['Id_club']) || isset($jsonData['ID_CLUB'])){
             $id_club = $jsonData['id_club'] ?? $jsonData['Id_club'] ?? $jsonData['ID_CLUB'];
             
-            if(empty($id_club)) {
+            if(empty($id_club) || $id_club === null || $id_club === '' || $id_club === 'null') {
                 // Si id_club está vacío, quitar el club del entrenador
                 $coach->setClub(null);
             } else {
@@ -264,7 +270,7 @@ class CoachController extends AbstractController
                 
                 // Verificar si el club ya tiene otro entrenador (excluyendo el actual)
                 $existingCoachInClub = $entityManager->getRepository(Coach::class)->findOneBy(['club' => $club]);
-                if($existingCoachInClub && $existingCoachInClub->getId() !== $id){
+                if($existingCoachInClub && $existingCoachInClub->getId() != (int)$id){
                     return $this->json(['error' => 'Este club ya tiene un entrenador asignado'], 400);
                 }
                 
@@ -273,7 +279,7 @@ class CoachController extends AbstractController
         }
 
         $entityManager->flush();
-
+        
         return $this->json([
             'message' => 'Coach updated successfully'
         ]);

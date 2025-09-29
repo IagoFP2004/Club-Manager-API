@@ -255,7 +255,11 @@ class ClubController extends AbstractController
         }
 
         if(isset($jsonData['id_club'])){
-            $errores['id_club'] = 'El id_club no puede ser modificado';
+            $id_club_enviado = $jsonData['id_club'];
+            $id_club_actual = $club->getIdClub();
+            if($id_club_enviado !== $id_club_actual){
+                $errores['id_club'] = 'El id_club no puede ser modificado';
+            }
         }
         if(isset($jsonData['nombre'])){
             $club->setNombre($jsonData['nombre']);
@@ -335,7 +339,7 @@ class ClubController extends AbstractController
         }
         
         $entityManager->flush();
-
+        
         return $this->json(['message' => 'Club updated successfully']);
     }
 }

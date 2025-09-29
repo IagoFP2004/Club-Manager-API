@@ -186,8 +186,6 @@ class PlayerController extends AbstractController
             }
         }
 
-
-
         //Creamos al jugador y le asignamos los datos
         $player = new Player();
         $player->setNombre($nombre);
@@ -205,15 +203,8 @@ class PlayerController extends AbstractController
         //Guardamos el jugador en la base de datos
         $entityManager->persist($player);
         $entityManager->flush();
+        $this->sendEmailRegistered($player, $club);
 
-        // Actualizar presupuesto del club automáticamente
-        if($club) {
-            $club->guardarNuevoPresupuesto();
-            $entityManager->persist($club);
-            $entityManager->flush();
-            $this->sendEmailRegistered($player, $club);
-        }
-        
         //Devolvemos el mensaje de éxito
         return $this->json(['message' => 'Player created successfully']);
         

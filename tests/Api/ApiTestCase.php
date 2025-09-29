@@ -15,6 +15,20 @@ abstract class ApiTestCase extends WebTestCase
     {
         parent::setUp();
         $this->client = static::createClient(); // arranca el kernel en "test"
+        
+        // Set up the database schema for each test
+        $this->setUpDatabase();
+    }
+    
+    private function setUpDatabase(): void
+    {
+        $container = static::getContainer();
+        $entityManager = $container->get('doctrine.orm.entity_manager');
+        
+        // Create the database schema
+        $schemaTool = new \Doctrine\ORM\Tools\SchemaTool($entityManager);
+        $metadata = $entityManager->getMetadataFactory()->getAllMetadata();
+        $schemaTool->createSchema($metadata);
     }
 
     protected function requestJson(string $method, string $uri, array $payload = [], array $headers = []): void
