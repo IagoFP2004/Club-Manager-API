@@ -13,12 +13,12 @@ use Doctrine\ORM\Mapping as ORM;
 class Club
 {
     #[ORM\Id]
-    #[ORM\Column(length: 5)]
-    #[ORM\GeneratedValue(strategy: 'NONE')]
-    private ?string $id_club = null;
-
-    #[ORM\Column]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: Types::INTEGER)]
     private ?int $id = null;
+
+    #[ORM\Column(length: 5, unique: true)]
+    private ?string $id_club = null;
 
     #[ORM\Column(length: 255)]
     private ?string $nombre = null;
