@@ -208,13 +208,7 @@ class Club
 
     function getPresupuestoRestante(): float
     {
-        return (float)$this->presupuesto - $this->getGastoJugadores() - $this->getGastosEntrenadores();
+        return (float)$this->presupuesto - ($this->getGastoJugadores() + $this->getGastosEntrenadores());
     }
-    
-    function guardarNuevoPresupuesto():void
-    {
-        $nuevoPresupuesto = $this->getPresupuestoRestante();
-        $this->presupuesto = (string)$nuevoPresupuesto; // ← Actualizar el presupuesto total
-        error_log("Presupuesto actualizado a: " . $nuevoPresupuesto . " para club " . $this->getNombre());
-    }
+
 }

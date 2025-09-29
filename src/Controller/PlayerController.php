@@ -101,14 +101,17 @@ class PlayerController extends AbstractController
             return $this->json(['error' => 'Player not found'], 404);
         }
 
+        $club = $player->getClub();
+        $coach = $club && $club->getCoaches()->count() > 0 ? $club->getCoaches()->first() : null;
+        
         $data = [
             'id' => $player->getId(),
             'nombre' => $player->getNombre(),
             'apellidos' => $player->getApellidos(),
             'dorsal' => $player->getDorsal(),
             'salario' => $player->getSalario(),
-            'club' => $player->getClub()->getNombre(),
-            'entrenador' => $player->getClub()->getCoaches()->first()->getNombre() . ' ' . $player->getClub()->getCoaches()->first()->getApellidos()
+            'club' => $club ? $club->getNombre() : null,
+            'entrenador' => $coach ? $coach->getNombre() . ' ' . $coach->getApellidos() : 'Sin entrenador'
         ];
 
         return $this->json($data);
@@ -324,13 +327,6 @@ class PlayerController extends AbstractController
         
         // Guardar los cambios en la base de datos
         $entityManager->flush();
-
-        // Actualizar presupuesto del club automáticamente
-        if($player->getClub()) {
-            $player->getClub()->guardarNuevoPresupuesto();
-            $entityManager->persist($player->getClub());
-            $entityManager->flush();
-        }
 
         //Devolvemos el mensaje de éxito
         return $this->json(['message' => 'Player updated successfully']);

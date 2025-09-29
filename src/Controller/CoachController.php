@@ -149,6 +149,8 @@ class CoachController extends AbstractController
         $existingCoach = $entityManager->getRepository(Coach::class)->findOneBy(['dni' => $dni]);
         if ($existingCoach) {
             $errores['dni'] = 'El DNI ya existe';
+        }else if(!preg_match('/^[0-9]{9}[A-Z]$/', $dni)){
+            $errores['dni'] = 'El DNI no es válido';
         }
 
         // Verificar si el club existe (solo si se proporciona)

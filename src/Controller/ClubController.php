@@ -55,7 +55,9 @@ class ClubController extends AbstractController
             $entrenador = '';
             if($club->getCoaches()->count() > 0){
                 $coach = $club->getCoaches()->first();
-                $entrenador = $coach->getNombre() . ' ' . $coach->getApellidos();
+                if($coach) {
+                    $entrenador = $coach->getNombre() . ' ' . $coach->getApellidos();
+                }
             }
             
             // Obtener jugadores del club
@@ -72,6 +74,7 @@ class ClubController extends AbstractController
                 'ciudad' => $club->getCiudad(),
                 'estadio' => $club->getEstadio(),
                 'presupuesto' => $club->getPresupuesto(),
+                'presupuesto_restante' => $club->getPresupuestoRestante(),
                 'entrenador' => $entrenador,
                 'jugadores' => !empty($jugadores) ? $jugadores : 'Sin jugadores'
             ];
@@ -111,7 +114,9 @@ class ClubController extends AbstractController
         // Obtener entrenadores del club
         $entrenadores = [];
         foreach($club->getCoaches() as $coach){
-            $entrenadores[] = $coach->getNombre() . ' ' . $coach->getApellidos();
+            if($coach) {
+                $entrenadores[] = $coach->getNombre() . ' ' . $coach->getApellidos();
+            }
         }
 
         // Obtener jugadores del club
@@ -128,6 +133,7 @@ class ClubController extends AbstractController
             'ciudad' => $club->getCiudad(),
             'estadio' => $club->getEstadio(),
             'presupuesto' => $club->getPresupuesto(),
+            'presupuesto_restante' => $club->getPresupuestoRestante(),
             'entrenador' => !empty($entrenadores) ? $entrenadores : 'Sin entrenadores',
             'jugadores' => !empty($jugadores) ? $jugadores : 'Sin jugadores'
         ];
@@ -332,17 +338,4 @@ class ClubController extends AbstractController
 
         return $this->json(['message' => 'Club updated successfully']);
     }
-
-    public function actualizarPresupuesto(EntityManagerInterface $entityManager, $id, $gastoJ, $gastoE): void
-    {
-        $club = $entityManager->getRepository(Club::class)->findOneBy(['id' => $id]);
-        
-        if (!$club) {
-            throw new \Exception("Club with id {$id} not found");
-        }
-        
-        $club->setPresupuesto($club->getPresupuesto() - $gastoJ - $gastoE);
-        $entityManager->flush();
-    }
-
 }
