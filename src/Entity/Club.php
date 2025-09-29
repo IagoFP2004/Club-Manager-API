@@ -8,6 +8,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Event\PrePersistEventArgs;
+use Doctrine\ORM\Event\PreUpdateEventArgs;
 
 #[ORM\Entity(repositoryClass: ClubRepository::class)]
 class Club
@@ -41,6 +43,25 @@ class Club
 
     #[ORM\OneToMany(mappedBy: 'club', targetEntity: Coach::class, fetch: 'EAGER')]
     private Collection $coaches;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    private ?\DateTimeInterface $createdAt = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    private ?\DateTimeInterface $updatedAt = null;
+
+    #[ORM\PrePersist]
+    public function setCreatedAtValue(): void
+    {
+        $this->createdAt = new \DateTime();
+        $this->updatedAt = new \DateTime();
+    }
+
+    #[ORM\PreUpdate]
+    public function setUpdatedAtValue(): void
+    {
+        $this->updatedAt = new \DateTime();
+    }
 
     public function __construct()
     {
@@ -187,22 +208,22 @@ class Club
     public function getGastoJugadores(): float
     {
         $gastos = 0;
-        
-        foreach($this->players as $player) {
+
+        foreach ($this->players as $player) {
             $gastos += (float)$player->getSalario();
         }
-        
+
         return $gastos;
     }
 
     public function getGastosEntrenadores(): float
     {
         $gastos = 0;
-        
-        foreach($this->coaches as $coach) {
+
+        foreach ($this->coaches as $coach) {
             $gastos += (float)$coach->getSalario();
         }
-        
+
         return $gastos;
     }
 
@@ -211,4 +232,27 @@ class Club
         return (float)$this->presupuesto - ($this->getGastoJugadores() + $this->getGastosEntrenadores());
     }
 
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(\DateTimeInterface $updatedAt): static
+    {
+        $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
 }
