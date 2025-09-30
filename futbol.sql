@@ -31,8 +31,8 @@ CREATE TABLE player (
     salario DECIMAL(10, 2) NOT NULL,
     id_club INT,
     PRIMARY KEY (id),
-    KEY IDX_player_club (club_id),
-    CONSTRAINT FK_player_club FOREIGN KEY (club_id) REFERENCES club (id)
+    KEY IDX_player_club (id_club),
+    CONSTRAINT FK_player_club FOREIGN KEY (id_club) REFERENCES club (id)
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla coach (FK -> club.id)
@@ -44,8 +44,8 @@ CREATE TABLE coach (
     salario DECIMAL(10, 2) NOT NULL,
     id_club INT,
     PRIMARY KEY (id),
-    KEY IDX_coach_club (club_id),
-    CONSTRAINT FK_coach_club FOREIGN KEY (club_id) REFERENCES club (id)
+    KEY IDX_coach_club (id_club),
+    CONSTRAINT FK_coach_club FOREIGN KEY (id_club) REFERENCES club (id)
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Insertar clubes
@@ -59,8 +59,8 @@ INSERT INTO club (id_club, nombre, fundacion, ciudad, estadio, presupuesto) VALU
 ('MAN', 'Manchester United',      1878, 'Manchester','Old Trafford',        900000000),
 ('OFC', 'Olympique de Marseille', 1899, 'Marsella',  'Vélodrome',           250000000);
 
--- Insertar jugadores (usamos subconsulta para mapear club_id)
-INSERT INTO player (nombre, apellidos, dorsal, salario, club_id) VALUES
+-- Insertar jugadores (usamos subconsulta para mapear id_club)
+INSERT INTO player (nombre, apellidos, dorsal, salario, id_club) VALUES
 ('Iago',       'Aspas Juncal', 10,  2500,      (SELECT id FROM club WHERE id_club='CEL')),
 ('Vinicius',   'Junior',        7,  20000000,  (SELECT id FROM club WHERE id_club='RM')),
 ('Jude',       'Bellingham',    5,  18000000,  (SELECT id FROM club WHERE id_club='RM')),
@@ -79,7 +79,7 @@ INSERT INTO player (nombre, apellidos, dorsal, salario, club_id) VALUES
 ('Marcus',     'Rashford',     10,  20000000,  (SELECT id FROM club WHERE id_club='MAN'));
 
 -- Insertar entrenadores
-INSERT INTO coach (dni, nombre, apellidos, salario, club_id) VALUES
+INSERT INTO coach (dni, nombre, apellidos, salario, id_club) VALUES
 ('11223344C', 'Diego',     'Simeone',     30000000, (SELECT id FROM club WHERE id_club='ATM')),
 ('12345678A', 'Carlo',     'Ancelotti',   15000000, (SELECT id FROM club WHERE id_club='RM')),
 ('87654321B', 'Xavi',      'Hernández',   12000000, (SELECT id FROM club WHERE id_club='FCB')),

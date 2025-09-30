@@ -26,9 +26,8 @@ class Coach
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     private ?string $salario = null;
 
-    #[ORM\ManyToOne(targetEntity: Club::class, inversedBy: 'coaches', fetch: 'EAGER')]
-    #[ORM\JoinColumn(name: 'id_club', referencedColumnName: 'id', nullable: true)]
-    private ?Club $club = null;
+    #[ORM\Column(length: 5, nullable: true)]
+    private ?string $id_club = null;
 
     public function getId(): ?int
     {
