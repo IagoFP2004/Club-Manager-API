@@ -5,7 +5,7 @@
 		"description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "48680273",
-		"_collection_link": "https://iagofranciscoperez-8018051.postman.co/workspace/Iago-Francisco-P%25C3%25A9rez's-Workspac~f2397794-7a9b-4c29-8f74-1dcf23feb8ff/collection/48680273-57165712-4ff4-47df-baec-3d9644bd4654?action=share&source=collection_link&creator=48680273"
+		"_collection_link": "https://iagofranciscoperez-8018051.postman.co/workspace/Iago-Francisco-P%C3%A9rez's-Workspac~f2397794-7a9b-4c29-8f74-1dcf23feb8ff/collection/48680273-57165712-4ff4-47df-baec-3d9644bd4654?action=share&source=collection_link&creator=48680273"
 	},
 	"item": [
 		{
@@ -60,13 +60,13 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{baseURL}}/players/1",
+									"raw": "{{baseURL}}/players/2",
 									"host": [
 										"{{baseURL}}"
 									],
 									"path": [
 										"players",
-										"1"
+										"2"
 									]
 								}
 							},
@@ -111,7 +111,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"nombre\": \"prueba\",\r\n    \"apellidos\":\"apellidos prueba\",\r\n    \"dorsal\": \"9\",\r\n    \"salario\": \"2500\",\r\n    \"id_club\": \"CEL\"\r\n}",
+									"raw": "{\r\n    \"nombre\": \"Jose\",\r\n    \"apellidos\":\"Francisco Manuel\",\r\n    \"dorsal\": \"4\",\r\n    \"salario\": \"2625000\",\r\n    \"id_club\": \"CEL\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -141,13 +141,13 @@
 								"method": "DELETE",
 								"header": [],
 								"url": {
-									"raw": "{{baseURL}}/players/42",
+									"raw": "{{baseURL}}/players/19",
 									"host": [
 										"{{baseURL}}"
 									],
 									"path": [
 										"players",
-										"42"
+										"19"
 									],
 									"query": [
 										{
@@ -177,7 +177,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"dorsal\": \"5\"\r\n}",
+									"raw": "{\r\n    \"dorsal\": \"24\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -185,13 +185,13 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseURL}}/players/43",
+									"raw": "{{baseURL}}/players/2",
 									"host": [
 										"{{baseURL}}"
 									],
 									"path": [
 										"players",
-										"43"
+										"2"
 									]
 								}
 							},
@@ -261,7 +261,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"id_club\": \"OFV\",\r\n    \"nombre\": \"Oliveira Futlbol Club\",\r\n    \"fundacion\": \"1969\",\r\n    \"ciudad\": \"Ponteareas\",\r\n    \"estadio\": \"O Rabel\",\r\n    \"presupuesto\": 1000\r\n}",
+									"raw": "{\r\n    \"id_club\": \"CDA\",\r\n    \"nombre\": \"Club Deportivo Areas\",\r\n    \"fundacion\": \"1950\",\r\n    \"ciudad\": \"Ponteareas\",\r\n    \"estadio\": \"A lomba\",\r\n    \"presupuesto\": 3000000\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -295,13 +295,13 @@
 									"raw": "{\r\n    \"id_club\": \"OFV\",\r\n    \"nombre\": \"Oliveira Futlbol Club\",\r\n    \"fundacion\": \"1969\",\r\n    \"ciudad\": \"Ponteareas\",\r\n    \"estadio\": \"O Rabel\",\r\n    \"presupuesto\": 1000\r\n}"
 								},
 								"url": {
-									"raw": "{{baseURL}}/clubs/9",
+									"raw": "{{baseURL}}/clubs/10",
 									"host": [
 										"{{baseURL}}"
 									],
 									"path": [
 										"clubs",
-										"9"
+										"10"
 									]
 								}
 							},
@@ -313,13 +313,13 @@
 					"name": "PUT",
 					"item": [
 						{
-							"name": "New Request",
+							"name": "Update-club(PUT-RAW-JSON)",
 							"request": {
 								"method": "PUT",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"presupuesto\": \"1000\"\r\n}",
+									"raw": "{\r\n    \"presupuesto\": \"108000000\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -327,13 +327,13 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseURL}}/clubs/OFC",
+									"raw": "{{baseURL}}/clubs/10",
 									"host": [
 										"{{baseURL}}"
 									],
 									"path": [
 										"clubs",
-										"OFC"
+										"10"
 									]
 								}
 							},
@@ -355,12 +355,18 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{baseURL}}/coaches",
+									"raw": "{{baseURL}}/coaches?page=2",
 									"host": [
 										"{{baseURL}}"
 									],
 									"path": [
 										"coaches"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "2"
+										}
 									]
 								}
 							},
@@ -372,47 +378,13 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{baseURL}}/coaches/9",
+									"raw": "{{baseURL}}/coaches/1",
 									"host": [
 										"{{baseURL}}"
 									],
 									"path": [
 										"coaches",
-										"9"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "New Request",
-							"protocolProfileBehavior": {
-								"disableBodyPruning": true
-							},
-							"request": {
-								"method": "GET",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\r\n    \"dni\": \"123456789R\",\r\n    \"nombre\": \"Nombre Entrenador\",\r\n    \"apellidos\": \"Apellifos Entrenador\",\r\n    \"salario\": \"1200\",\r\n    \"id_club\": \"OFC\"\r\n}"
-								},
-								"url": {
-									"raw": "{{baseURL}}/coaches?page=1&pageSize=2",
-									"host": [
-										"{{baseURL}}"
-									],
-									"path": [
-										"coaches"
-									],
-									"query": [
-										{
-											"key": "page",
-											"value": "1"
-										},
-										{
-											"key": "pageSize",
-											"value": "2"
-										}
+										"1"
 									]
 								}
 							},
@@ -430,7 +402,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"dni\": \"123456789R\",\r\n    \"nombre\": \"Nombre Entrenador\",\r\n    \"apellidos\": \"Apellifos Entrenador\",\r\n    \"salario\": \"1200\",\r\n    \"id_club\": \"OFC\"\r\n}",
+									"raw": "{\r\n    \"dni\": \"123456789R\",\r\n    \"nombre\": \"Gustavo\",\r\n    \"apellidos\": \"Itriago Gonzalez\",\r\n    \"salario\": \"1000000\",\r\n    \"id_club\": \"CDA\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -464,13 +436,13 @@
 									"raw": "{\r\n    \r\n}"
 								},
 								"url": {
-									"raw": "{{baseURL}}/coaches/8",
+									"raw": "{{baseURL}}/coaches/13",
 									"host": [
 										"{{baseURL}}"
 									],
 									"path": [
 										"coaches",
-										"8"
+										"13"
 									]
 								}
 							},
@@ -488,7 +460,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n   \"nombre\": \"Prueba Entrenador\" \r\n}",
+									"raw": "{\r\n   \"salario\": \"1200000\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -496,13 +468,13 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseURL}}/coaches/9",
+									"raw": "{{baseURL}}/coaches/13",
 									"host": [
 										"{{baseURL}}"
 									],
 									"path": [
 										"coaches",
-										"9"
+										"13"
 									]
 								}
 							},
@@ -516,7 +488,7 @@
 	"variable": [
 		{
 			"key": "baseURL",
-			"value": "http://localhost:8000",
+			"value": "",
 			"type": "default"
 		}
 	]
