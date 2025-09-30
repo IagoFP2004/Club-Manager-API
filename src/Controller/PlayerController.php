@@ -186,6 +186,14 @@ class PlayerController extends AbstractController
             }
         }
 
+        // Validar presupuesto del club
+        $presupuestoRestante = $club->getPresupuestoRestante();
+        if ($presupuestoRestante < $salario) {
+            return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
+        }
+
+
+
         //Creamos al jugador y le asignamos los datos
         $player = new Player();
         $player->setNombre($nombre);
@@ -227,6 +235,7 @@ class PlayerController extends AbstractController
             return $this->json(['error' => 'No hay datos para actualizar'], 400);
         }
 
+        $presupuesto_club = $player->getClub()->getPresupuesto();
         //Hacemos validaciones básicas
         if(isset($jsonData['dni'])){
             return $this->json(['error' => 'El DNI no puede ser modificado'], 400);
@@ -241,6 +250,12 @@ class PlayerController extends AbstractController
             $player->setSalario($jsonData['salario']);
             if($jsonData['salario'] <= 0){
                 return $this->json(['error' => 'El salario no puede ser 0 o negativo'], 400);
+            }else{
+                // Validar presupuesto del club
+                $presupuestoRestante = $player->getClub()->getPresupuestoRestante();
+                if ($presupuestoRestante < $jsonData['salario']) {
+                    return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
+                }
             }
         }
         
@@ -314,6 +329,14 @@ class PlayerController extends AbstractController
             }
             
             $player->setDorsal($jsonData['dorsal']);
+        }
+        
+        // Validar presupuesto final antes de guardar
+        if ($player->getClub()) {
+            $presupuestoRestante = $player->getClub()->getPresupuestoRestante();
+            if ($presupuestoRestante < 0) {
+                return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
+            }
         }
         
         // Guardar los cambios en la base de datos

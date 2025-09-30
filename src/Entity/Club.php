@@ -3,13 +3,10 @@
 namespace App\Entity;
 
 use App\Repository\ClubRepository;
-use BcMath\Number;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\ORM\Event\PrePersistEventArgs;
-use Doctrine\ORM\Event\PreUpdateEventArgs;
 
 #[ORM\Entity(repositoryClass: ClubRepository::class)]
 class Club
@@ -34,7 +31,6 @@ class Club
     #[ORM\Column(length: 255)]
     private ?string $estadio = null;
 
-
     #[ORM\Column(type: Types::DECIMAL, precision: 15, scale: 2)]
     private ?string $presupuesto = null;
 
@@ -43,25 +39,6 @@ class Club
 
     #[ORM\OneToMany(mappedBy: 'club', targetEntity: Coach::class, fetch: 'EAGER')]
     private Collection $coaches;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $updatedAt = null;
-
-    #[ORM\PrePersist]
-    public function setCreatedAtValue(): void
-    {
-        $this->createdAt = new \DateTime();
-        $this->updatedAt = new \DateTime();
-    }
-
-    #[ORM\PreUpdate]
-    public function setUpdatedAtValue(): void
-    {
-        $this->updatedAt = new \DateTime();
-    }
 
     public function __construct()
     {
@@ -82,7 +59,6 @@ class Club
     public function setIdClub(string $id_club): static
     {
         $this->id_club = $id_club;
-
         return $this;
     }
 
@@ -94,7 +70,6 @@ class Club
     public function setNombre(string $nombre): static
     {
         $this->nombre = $nombre;
-
         return $this;
     }
 
@@ -106,7 +81,6 @@ class Club
     public function setFundacion(int $fundacion): static
     {
         $this->fundacion = $fundacion;
-
         return $this;
     }
 
@@ -118,7 +92,6 @@ class Club
     public function setCiudad(string $ciudad): static
     {
         $this->ciudad = $ciudad;
-
         return $this;
     }
 
@@ -130,10 +103,8 @@ class Club
     public function setEstadio(string $estadio): static
     {
         $this->estadio = $estadio;
-
         return $this;
     }
-
 
     public function getPresupuesto(): ?string
     {
@@ -143,7 +114,6 @@ class Club
     public function setPresupuesto(string $presupuesto): static
     {
         $this->presupuesto = $presupuesto;
-
         return $this;
     }
 
@@ -161,7 +131,6 @@ class Club
             $this->players->add($player);
             $player->setClub($this);
         }
-
         return $this;
     }
 
@@ -172,7 +141,6 @@ class Club
                 $player->setClub(null);
             }
         }
-
         return $this;
     }
 
@@ -190,7 +158,6 @@ class Club
             $this->coaches->add($coach);
             $coach->setClub($this);
         }
-
         return $this;
     }
 
@@ -201,58 +168,29 @@ class Club
                 $coach->setClub(null);
             }
         }
-
         return $this;
     }
 
     public function getGastoJugadores(): float
     {
         $gastos = 0;
-
         foreach ($this->players as $player) {
             $gastos += (float)$player->getSalario();
         }
-
         return $gastos;
     }
 
     public function getGastosEntrenadores(): float
     {
         $gastos = 0;
-
         foreach ($this->coaches as $coach) {
             $gastos += (float)$coach->getSalario();
         }
-
         return $gastos;
     }
 
-    function getPresupuestoRestante(): float
+    public function getPresupuestoRestante(): float
     {
         return (float)$this->presupuesto - ($this->getGastoJugadores() + $this->getGastosEntrenadores());
-    }
-
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): static
-    {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
     }
 }

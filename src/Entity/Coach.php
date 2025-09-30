@@ -5,8 +5,6 @@ namespace App\Entity;
 use App\Repository\CoachRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\ORM\Event\PrePersistEventArgs;
-use Doctrine\ORM\Event\PreUpdateEventArgs;
 
 #[ORM\Entity(repositoryClass: CoachRepository::class)]
 class Coach
@@ -29,27 +27,8 @@ class Coach
     private ?string $salario = null;
 
     #[ORM\ManyToOne(targetEntity: Club::class, inversedBy: 'coaches', fetch: 'EAGER')]
-    #[ORM\JoinColumn(name: 'club_id', referencedColumnName: 'id')]
+    #[ORM\JoinColumn(name: 'club_id', referencedColumnName: 'id', nullable: false)]
     private ?Club $club = null;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $updatedAt = null;
-
-    #[ORM\PrePersist]
-    public function setCreatedAtValue(): void
-    {
-        $this->createdAt = new \DateTime();
-        $this->updatedAt = new \DateTime();
-    }
-
-    #[ORM\PreUpdate]
-    public function setUpdatedAtValue(): void
-    {
-        $this->updatedAt = new \DateTime();
-    }
 
     public function getId(): ?int
     {
@@ -64,7 +43,6 @@ class Coach
     public function setDni(string $dni): static
     {
         $this->dni = $dni;
-
         return $this;
     }
 
@@ -76,7 +54,6 @@ class Coach
     public function setNombre(string $nombre): static
     {
         $this->nombre = $nombre;
-
         return $this;
     }
 
@@ -88,7 +65,6 @@ class Coach
     public function setApellidos(string $apellidos): static
     {
         $this->apellidos = $apellidos;
-
         return $this;
     }
 
@@ -100,7 +76,6 @@ class Coach
     public function setSalario(string $salario): static
     {
         $this->salario = $salario;
-
         return $this;
     }
 
@@ -112,31 +87,6 @@ class Coach
     public function setClub(?Club $club): static
     {
         $this->club = $club;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): static
-    {
-        $this->updatedAt = $updatedAt;
-
         return $this;
     }
 

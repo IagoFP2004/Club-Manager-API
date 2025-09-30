@@ -168,6 +168,13 @@ class CoachController extends AbstractController
                 }
             }
         }
+        // Validar presupuesto del club
+        if ($club) {
+            $presupuestoRestante = $club->getPresupuestoRestante();
+            if ($presupuestoRestante < $salario) {
+                $errores['salario'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante;
+            }
+        }
 
         if (!empty($errores)) {
             return $this->json(['error' => $errores], 400);
@@ -273,8 +280,22 @@ class CoachController extends AbstractController
                 if($existingCoachInClub && $existingCoachInClub->getId() != (int)$id){
                     return $this->json(['error' => 'Este club ya tiene un entrenador asignado'], 400);
                 }
+
+                // Validar presupuesto del club
+                $presupuestoRestante = $club->getPresupuestoRestante();
+                if ($presupuestoRestante < $salario) {
+                    return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
+                }
                 
                 $coach->setClub($club);
+            }
+        }
+
+        // Validar presupuesto final antes de guardar
+        if ($coach->getClub()) {
+            $presupuestoRestante = $coach->getClub()->getPresupuestoRestante();
+            if ($presupuestoRestante < 0) {
+                return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
             }
         }
 
