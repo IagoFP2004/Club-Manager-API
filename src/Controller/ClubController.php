@@ -190,33 +190,33 @@ class ClubController extends AbstractController
             return $this->json(['error' => 'Todos los campos son requeridos'], 400);
         }
 
-        $errores = [];
+        
 
         if(empty($id_club)){
-            $errores['id_club'] = 'El id_club es requerido';
+            return $this->json(['error' => 'El id_club es requerido'], 400);
         }else if(strlen($id_club) < 3 || strlen($id_club) > 5){
-            $errores['id_club'] = 'El id_club debe tener entre 3 y 5 caracteres';
+            return $this->json(['error' => 'El id_club debe tener entre 3 y 5 caracteres'], 400);
         }else if($entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id_club])){
-            $errores['id_club'] = 'El id_club ya existe';
+            return $this->json(['error' => 'El id_club ya existe'], 400);
         }
         if(empty($nombre)){
-            $errores['nombre'] = 'El nombre es requerido';
+            return $this->json(['error' => 'El nombre es requerido'], 400);
         }
         if(empty($fundacion)){
-            $errores['fundacion'] = 'La fundacion es requerida';
+            return $this->json(['error' => 'La fundacion es requerida'], 400);
         }else if($fundacion < 1857 || $fundacion > date('Y')){
-            $errores['fundacion'] = 'La fundacion debe ser entre 1800 y 2025';
+            return $this->json(['error' => 'La fundacion debe ser entre 1800 y 2025'], 400);
         }
         if(empty($ciudad)){
-            $errores['ciudad'] = 'La ciudad es requerida';
+            return $this->json(['error' => 'La ciudad es requerida'], 400);
         }
         if(empty($estadio)){
-            $errores['estadio'] = 'El estadio es requerido';
+            return $this->json(['error' => 'El estadio es requerido'], 400);
         }
         if(empty($presupuesto)){
-            $errores['presupuesto'] = 'El presupuesto es requerido';
+            return $this->json(['error' => 'El presupuesto es requerido'], 400);
         }else if($presupuesto <= 0){
-            $errores['presupuesto'] = 'El presupuesto no puede ser 0 o negativo';
+            return $this->json(['error' => 'El presupuesto no puede ser 0 o negativo'], 400);
         }
 
         if(!empty($errores)){
@@ -249,7 +249,6 @@ class ClubController extends AbstractController
         $body = $request->getContent();
         $jsonData = json_decode($body, true);
 
-        $errores = [];
         if(!$jsonData){
             return $this->json(['error' => 'No hay datos para actualizar'], 400);
         }
@@ -258,7 +257,7 @@ class ClubController extends AbstractController
             $id_club_enviado = $jsonData['id_club'];
             $id_club_actual = $club->getIdClub();
             if($id_club_enviado !== $id_club_actual){
-                $errores['id_club'] = 'El id_club no puede ser modificado';
+                return $this->json(['error' => 'El id_club no puede ser modificado'], 400);
             }
         }
         if(isset($jsonData['nombre'])){
@@ -266,7 +265,7 @@ class ClubController extends AbstractController
         }
         if(isset($jsonData['fundacion'])){
             if($jsonData['fundacion'] < 1857 || $jsonData['fundacion'] > date('Y')){
-                $errores['fundacion'] = 'La fundacion debe ser entre 1800 y 2025';
+                return $this->json(['error' => 'La fundacion debe ser entre 1800 y 2025'], 400);
             }else{
                 $club->setFundacion($jsonData['fundacion']);
             }
@@ -279,7 +278,7 @@ class ClubController extends AbstractController
         }
         if(isset($jsonData['presupuesto'])){
             if($jsonData['presupuesto'] <= 0){
-                $errores['presupuesto'] = 'El presupuesto no puede ser 0 o negativo';
+                return $this->json(['error' => 'El presupuesto no puede ser 0 o negativo'], 400);
             }else{
                 $club->setPresupuesto($jsonData['presupuesto']);
             }
@@ -304,21 +303,21 @@ class ClubController extends AbstractController
                     ->getResult();
 
                 if(empty($coach)){
-                    $errores['entrenador'] = 'No se encontró ningún entrenador con ese nombre';
+                    return $this->json(['error' => 'No se encontró ningún entrenador con ese nombre'], 400);
                 } else if(count($coach) > 1){
-                    $errores['entrenador'] = 'Se encontraron múltiples entrenadores con ese nombre. Especifica más detalles.';
+                    return $this->json(['error' => 'Se encontraron múltiples entrenadores con ese nombre. Especifica más detalles.'], 400);
                 } else {
                     $coachEncontrado = $coach[0];
                     
                     // Verificar si el club ya tiene un entrenador
                     $existingCoach = $entityManager->getRepository(Coach::class)->findOneBy(['club' => $club]);
                     if($existingCoach && $existingCoach->getId() !== $coachEncontrado->getId()){
-                        $errores['entrenador'] = 'Este club ya tiene un entrenador asignado';
+                        return $this->json(['error' => 'Este club ya tiene un entrenador asignado'], 400);
                     }
                     
                     // Verificar si el entrenador ya está en otro club
                     if($coachEncontrado->getClub() && $coachEncontrado->getClub()->getIdClub() !== $club->getIdClub()){
-                        $errores['entrenador'] = 'Este entrenador ya está asignado a otro club';
+                        return $this->json(['error' => 'Este entrenador ya está asignado a otro club'], 400);
                     }
                     
                     if(empty($errores['entrenador'])) {
@@ -332,12 +331,7 @@ class ClubController extends AbstractController
                 }
             }
         }
-        
-        // Verificar si hay errores y devolverlos
-        if(!empty($errores)){
-            return $this->json(['error' => $errores], 400);
-        }
-        
+         
         $entityManager->flush();
         
         return $this->json(['message' => 'Club updated successfully']);

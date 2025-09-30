@@ -125,8 +125,6 @@ class CoachController extends AbstractController
     #[Route('/coaches', name: 'coach_insert', methods: ['POST'])]
     public function createCoach(EntityManagerInterface $entityManager, Request $request): Response
     {
-        $errores = [];
-        
         // Obtener datos del JSON
         $body = $request->getContent();
         $data = json_decode($body, true);
@@ -149,9 +147,9 @@ class CoachController extends AbstractController
         // Verificar si el DNI ya existe
         $existingCoach = $entityManager->getRepository(Coach::class)->findOneBy(['dni' => $dni]);
         if ($existingCoach) {
-            $errores['dni'] = 'El DNI ya existe';
+            return $this->json(['error' => 'El DNI ya existe'], 400);
         }else if(!preg_match('/^[0-9]{9}[A-Z]$/', $dni)){
-            $errores['dni'] = 'El DNI no es válido';
+            return $this->json(['error' => 'El DNI no es válido'], 400);
         }
 
         // Verificar si el club existe (solo si se proporciona)
@@ -159,12 +157,12 @@ class CoachController extends AbstractController
         if (!empty($id_club)) {
             $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id_club]);
             if (!$club) {
-                $errores['id_club'] = 'El club no existe';
+                return $this->json(['error' => 'El club no existe'], 400);
             } else {
                 // Verificar si el club ya tiene un entrenador
                 $existingCoachInClub = $entityManager->getRepository(Coach::class)->findOneBy(['club' => $club]);
                 if ($existingCoachInClub) {
-                    $errores['id_club'] = 'Este club ya tiene un entrenador asignado';
+                    return $this->json(['error' => 'Este club ya tiene un entrenador asignado'], 400);
                 }
             }
         }
@@ -172,7 +170,7 @@ class CoachController extends AbstractController
         if ($club) {
             $presupuestoRestante = $club->getPresupuestoRestante();
             if ($presupuestoRestante < $salario) {
-                $errores['salario'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante;
+                return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
             }
         }
 
