@@ -40,7 +40,9 @@ class ClubControllerTest extends WebTestCase
         if ($response->getStatusCode() === Response::HTTP_OK) {
             $this->assertJson($response->getContent());
             $data = json_decode($response->getContent(), true);
-            $this->assertArrayHasKey('club', $data);
+            $this->assertArrayHasKey('id', $data);
+            $this->assertArrayHasKey('nombre', $data);
+            $this->assertArrayHasKey('id_club', $data);
         }
     }
 
@@ -227,4 +229,5 @@ class ClubControllerTest extends WebTestCase
         $this->assertArrayHasKey('clubs', $data);
         $this->assertArrayHasKey('pagination', $data);
     }
+        
 }

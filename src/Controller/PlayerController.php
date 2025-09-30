@@ -69,6 +69,7 @@ class PlayerController extends AbstractController
             ];
         }
 
+        
         $response = $this->json([
             'players' => $data,
             'pagination' => [
@@ -110,7 +111,7 @@ class PlayerController extends AbstractController
             'apellidos' => $player->getApellidos(),
             'dorsal' => $player->getDorsal(),
             'salario' => $player->getSalario(),
-            'club' => $club ? $club->getNombre() : null,
+            'club' => $club ? $club->getNombre() : 'Sin club',
             'entrenador' => $coach ? $coach->getNombre() . ' ' . $coach->getApellidos() : 'Sin entrenador'
         ];
 
@@ -166,21 +167,24 @@ class PlayerController extends AbstractController
 
         // Validar que el club existe (si se proporciona)
         $club = null;
-        $dorsales = [];
-        
         if (!empty($id_club)) {
             $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id_club]);
             if (!$club) {
                 return $this->json(['error' => 'Club not found'], 404);
             }
-            
-            //Guardamos los dorsales del club del jugador (solo si hay club)
+        }
+        
+        $dorsales = [];
+        
+        // Solo validar dorsales y presupuesto si hay club
+        if ($club) {
+            //Guardamos los dorsales del club del jugador
             $playersDelClub = $entityManager->getRepository(Player::class)->findBy(['club' => $club]);
             foreach($playersDelClub as $p){
                 $dorsales[] = $p->getDorsal();
             }
 
-            $existeJugador = $entityManager->getRepository(Player::class)->findOneBy(['nombre' => $nombre, 'apellidos' => $apellidos]);
+            $existeJugador = $entityManager->getRepository(Player::class)->findOneBy(['nombre' => $nombre, 'apellidos' => $apellidos, 'club' => $club]);
             if($existeJugador){
                 return $this->json(['error' => 'El jugador ya existe en el club'], 400);
             }
@@ -235,7 +239,8 @@ class PlayerController extends AbstractController
             return $this->json(['error' => 'No hay datos para actualizar'], 400);
         }
 
-        $presupuesto_club = $player->getClub()->getPresupuesto();
+        $club = $player->getClub();
+        $presupuesto_club = $club ? $club->getPresupuesto() : null;
         //Hacemos validaciones básicas
         if(isset($jsonData['dni'])){
             return $this->json(['error' => 'El DNI no puede ser modificado'], 400);
@@ -251,10 +256,12 @@ class PlayerController extends AbstractController
             if($jsonData['salario'] <= 0){
                 return $this->json(['error' => 'El salario no puede ser 0 o negativo'], 400);
             }else{
-                // Validar presupuesto del club
-                $presupuestoRestante = $player->getClub()->getPresupuestoRestante();
-                if ($presupuestoRestante < $jsonData['salario']) {
-                    return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
+                // Validar presupuesto del club (solo si el jugador tiene club)
+                if ($player->getClub()) {
+                    $presupuestoRestante = $player->getClub()->getPresupuestoRestante();
+                    if ($presupuestoRestante < $jsonData['salario']) {
+                        return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
+                    }
                 }
             }
         }

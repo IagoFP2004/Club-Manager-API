@@ -48,12 +48,13 @@ class CoachController extends AbstractController
         
         // Si no hay coaches, devolver array vacío con mensaje
         if (!$coaches || $coaches->getTotalItemCount() === 0) {
+            $pageSize = $request->query->getInt('pageSize', 5);
             return $this->json([
                 'coaches' => [],
                 'message' => 'No hay coaches registrados',
                 'pagination' => [
                     'current_page' => 1,
-                    'per_page' => 10,
+                    'per_page' => $pageSize,
                     'total_items' => 0,
                     'total_pages' => 0,
                     'has_next_page' => false,
@@ -74,7 +75,7 @@ class CoachController extends AbstractController
                 'nombre' => $coach->getNombre(),
                 'apellidos' => $coach->getApellidos(),
                 'salario' => $coach->getSalario(),
-                'id_club' => $club?->getIdClub()  // Usar la variable $club que ya tienes
+                'id_club' => $club?->getIdClub() ?? 'Sin club'
             ];
         }
         
@@ -116,7 +117,7 @@ class CoachController extends AbstractController
             'nombre' => $coach->getNombre(),
             'apellidos' => $coach->getApellidos(),
             'salario' => $coach->getSalario(),
-            'id_club' => $coach->getClub()?->getIdClub()
+            'id_club' => $club ? $club->getIdClub() : 'Sin club'
         ];
 
         return $this->json($data);

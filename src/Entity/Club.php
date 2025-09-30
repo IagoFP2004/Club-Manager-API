@@ -191,6 +191,6 @@ class Club
 
     public function getPresupuestoRestante(): float
     {
-        return (float)$this->presupuesto - ($this->getGastoJugadores() + $this->getGastosEntrenadores());
+        return (float)$this->presupuesto - (($this->getGastoJugadores() ?? 0) + ($this->getGastosEntrenadores() ?? 0));
     }
 }

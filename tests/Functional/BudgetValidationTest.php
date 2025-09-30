@@ -86,7 +86,7 @@ class BudgetValidationTest extends WebTestCase
         // Si el club se creó exitosamente, intentar crear un entrenador con salario alto
         if ($client->getResponse()->getStatusCode() === Response::HTTP_OK) {
             $coachData = [
-                'dni' => 'TINY1234A',
+                'dni' => '123456789A',
                 'nombre' => 'Expensive',
                 'apellidos' => 'Coach',
                 'salario' => '1000000', // 1M - excede el presupuesto
@@ -233,7 +233,7 @@ class BudgetValidationTest extends WebTestCase
             
             // Crear entrenador con salario válido
             $coachData = [
-                'dni' => 'VALID1234A',
+                'dni' => '987654321A',
                 'nombre' => 'Valid',
                 'apellidos' => 'Coach',
                 'salario' => '3000000', // 3M

@@ -43,7 +43,7 @@ class DatabaseIntegrationTest extends KernelTestCase
         $this->assertNotNull($savedClub);
         $this->assertEquals('Test Club', $savedClub->getNombre());
         $this->assertEquals(2024, $savedClub->getFundacion());
-        $this->assertEquals('50000000', $savedClub->getPresupuesto());
+        $this->assertEquals('50000000.00', $savedClub->getPresupuesto());
 
         // Cleanup
         $this->entityManager->remove($savedClub);
@@ -52,12 +52,24 @@ class DatabaseIntegrationTest extends KernelTestCase
 
     public function testPlayerPersistence(): void
     {
-        // Arrange
+        // Arrange - Create club first
+        $club = new Club();
+        $club->setIdClub('T' . time() . rand(100, 999));
+        $club->setNombre('Test Club');
+        $club->setFundacion(2024);
+        $club->setCiudad('Test City');
+        $club->setEstadio('Test Stadium');
+        $club->setPresupuesto('100000000');
+        
+        $this->entityManager->persist($club);
+        $this->entityManager->flush();
+        
         $player = new Player();
         $player->setNombre('Test');
         $player->setApellidos('Player');
         $player->setDorsal(99);
         $player->setSalario('1000000');
+        $player->setClub($club);
 
         // Act
         $this->entityManager->persist($player);
@@ -72,7 +84,7 @@ class DatabaseIntegrationTest extends KernelTestCase
         $this->assertEquals('Test', $savedPlayer->getNombre());
         $this->assertEquals('Player', $savedPlayer->getApellidos());
         $this->assertEquals(99, $savedPlayer->getDorsal());
-        $this->assertEquals('1000000', $savedPlayer->getSalario());
+        $this->assertEquals('1000000.00', $savedPlayer->getSalario());
 
         // Cleanup
         $this->entityManager->remove($savedPlayer);
@@ -81,12 +93,24 @@ class DatabaseIntegrationTest extends KernelTestCase
 
     public function testCoachPersistence(): void
     {
-        // Arrange
+        // Arrange - Create club first
+        $club = new Club();
+        $club->setIdClub('T2' . time() . rand(100, 999));
+        $club->setNombre('Test Club 2');
+        $club->setFundacion(2024);
+        $club->setCiudad('Test City 2');
+        $club->setEstadio('Test Stadium 2');
+        $club->setPresupuesto('100000000');
+        
+        $this->entityManager->persist($club);
+        $this->entityManager->flush();
+        
         $coach = new Coach();
         $coach->setDni('TEST1234A');
         $coach->setNombre('Test');
         $coach->setApellidos('Coach');
         $coach->setSalario('2000000');
+        $coach->setClub($club);
 
         // Act
         $this->entityManager->persist($coach);
@@ -100,7 +124,7 @@ class DatabaseIntegrationTest extends KernelTestCase
         $this->assertNotNull($savedCoach);
         $this->assertEquals('Test', $savedCoach->getNombre());
         $this->assertEquals('Coach', $savedCoach->getApellidos());
-        $this->assertEquals('2000000', $savedCoach->getSalario());
+        $this->assertEquals('2000000.00', $savedCoach->getSalario());
 
         // Cleanup
         $this->entityManager->remove($savedCoach);
@@ -153,7 +177,7 @@ class DatabaseIntegrationTest extends KernelTestCase
     {
         // Arrange
         $club = new Club();
-        $club->setIdClub('COACH');
+        $club->setIdClub('REL' . uniqid());
         $club->setNombre('Coach Club');
         $club->setFundacion(2024);
         $club->setCiudad('Test City');
@@ -161,11 +185,11 @@ class DatabaseIntegrationTest extends KernelTestCase
         $club->setPresupuesto('100000000');
 
         $coach = new Coach();
-        $coach->setDni('COACH1234A');
+        $coach->setDni('REL' . rand(100000, 999999) . 'A');
         $coach->setNombre('Relationship');
         $coach->setApellidos('Coach');
         $coach->setSalario('3000000');
-        $coach->setClub($club);
+        $club->addCoach($coach);
 
         // Act
         $this->entityManager->persist($club);
@@ -175,10 +199,10 @@ class DatabaseIntegrationTest extends KernelTestCase
 
         // Assert
         $savedClub = $this->entityManager->getRepository(Club::class)
-            ->findOneBy(['id_club' => 'COACH']);
+            ->findOneBy(['nombre' => 'Coach Club']);
         
         $savedCoach = $this->entityManager->getRepository(Coach::class)
-            ->findOneBy(['dni' => 'COACH1234A']);
+            ->findOneBy(['nombre' => 'Relationship', 'apellidos' => 'Coach']);
 
         $this->assertNotNull($savedClub);
         $this->assertNotNull($savedCoach);
@@ -195,7 +219,7 @@ class DatabaseIntegrationTest extends KernelTestCase
     {
         // Arrange
         $club = new Club();
-        $club->setIdClub('BUDGET');
+        $club->setIdClub('CALC' . uniqid());
         $club->setNombre('Budget Club');
         $club->setFundacion(2024);
         $club->setCiudad('Test City');
@@ -207,14 +231,14 @@ class DatabaseIntegrationTest extends KernelTestCase
         $player->setApellidos('Player');
         $player->setDorsal(1);
         $player->setSalario('30000000');
-        $player->setClub($club);
+        $club->addPlayer($player);
 
         $coach = new Coach();
-        $coach->setDni('BUDGET1234A');
+        $coach->setDni('987654321B');
         $coach->setNombre('Budget');
         $coach->setApellidos('Coach');
         $coach->setSalario('20000000');
-        $coach->setClub($club);
+        $club->addCoach($coach);
 
         // Act
         $this->entityManager->persist($club);
@@ -225,17 +249,13 @@ class DatabaseIntegrationTest extends KernelTestCase
 
         // Assert
         $savedClub = $this->entityManager->getRepository(Club::class)
-            ->findOneBy(['id_club' => 'BUDGET']);
+            ->findOneBy(['nombre' => 'Budget Club']);
 
         $this->assertNotNull($savedClub);
         $this->assertEquals(30000000.0, $savedClub->getGastoJugadores());
         $this->assertEquals(20000000.0, $savedClub->getGastosEntrenadores());
         $this->assertEquals(50000000.0, $savedClub->getPresupuestoRestante());
 
-        // Cleanup
-        $this->entityManager->remove($player);
-        $this->entityManager->remove($coach);
-        $this->entityManager->remove($savedClub);
-        $this->entityManager->flush();
+        // Cleanup - No es necesario, los tests se ejecutan en transacciones separadas
     }
 }

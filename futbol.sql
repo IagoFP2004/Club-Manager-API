@@ -29,7 +29,7 @@ CREATE TABLE player (
     apellidos VARCHAR(255) NOT NULL,
     dorsal INT NOT NULL,
     salario DECIMAL(10, 2) NOT NULL,
-    club_id INT NOT NULL,
+    id_club INT,
     PRIMARY KEY (id),
     KEY IDX_player_club (club_id),
     CONSTRAINT FK_player_club FOREIGN KEY (club_id) REFERENCES club (id)
@@ -42,7 +42,7 @@ CREATE TABLE coach (
     nombre VARCHAR(255) NOT NULL,
     apellidos VARCHAR(255) NOT NULL,
     salario DECIMAL(10, 2) NOT NULL,
-    club_id INT NOT NULL,
+    id_club INT,
     PRIMARY KEY (id),
     KEY IDX_coach_club (club_id),
     CONSTRAINT FK_coach_club FOREIGN KEY (club_id) REFERENCES club (id)

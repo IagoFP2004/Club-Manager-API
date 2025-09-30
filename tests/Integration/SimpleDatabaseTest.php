@@ -30,7 +30,7 @@ class SimpleDatabaseTest extends KernelTestCase
     {
         // Arrange
         $club = new Club();
-        $club->setIdClub('TEST' . uniqid());
+        $club->setIdClub('T' . rand(1000, 9999));
         $club->setNombre('Test Club');
         $club->setFundacion(2024);
         $club->setCiudad('Test City');
@@ -54,12 +54,24 @@ class SimpleDatabaseTest extends KernelTestCase
 
     public function testPlayerEntity(): void
     {
-        // Arrange
+        // Arrange - Create club first
+        $club = new Club();
+        $club->setIdClub('P' . rand(1000, 9999));
+        $club->setNombre('Test Club');
+        $club->setFundacion(2024);
+        $club->setCiudad('Test City');
+        $club->setEstadio('Test Stadium');
+        $club->setPresupuesto('100000000');
+        
+        $this->entityManager->persist($club);
+        $this->entityManager->flush();
+        
         $player = new Player();
         $player->setNombre('Test' . uniqid());
         $player->setApellidos('Player');
         $player->setDorsal(99);
         $player->setSalario('1000000');
+        $player->setClub($club);
 
         // Act
         $this->entityManager->persist($player);
@@ -79,12 +91,24 @@ class SimpleDatabaseTest extends KernelTestCase
 
     public function testCoachEntity(): void
     {
-        // Arrange
+        // Arrange - Create club first
+        $club = new Club();
+        $club->setIdClub('C' . rand(1000, 9999));
+        $club->setNombre('Test Club');
+        $club->setFundacion(2024);
+        $club->setCiudad('Test City');
+        $club->setEstadio('Test Stadium');
+        $club->setPresupuesto('100000000');
+        
+        $this->entityManager->persist($club);
+        $this->entityManager->flush();
+        
         $coach = new Coach();
         $coach->setDni('TEST' . rand(1000, 9999) . chr(rand(65, 90)));
         $coach->setNombre('Test' . uniqid());
         $coach->setApellidos('Coach');
         $coach->setSalario('2000000');
+        $coach->setClub($club);
 
         // Act
         $this->entityManager->persist($coach);
@@ -106,7 +130,7 @@ class SimpleDatabaseTest extends KernelTestCase
     {
         // Arrange
         $club = new Club();
-        $club->setIdClub('BUDGET' . uniqid());
+        $club->setIdClub('B' . rand(1000, 9999));
         $club->setNombre('Budget Test Club');
         $club->setFundacion(2024);
         $club->setCiudad('Test City');
@@ -118,14 +142,14 @@ class SimpleDatabaseTest extends KernelTestCase
         $player->setApellidos('Player');
         $player->setDorsal(1);
         $player->setSalario('3000000'); // 3M
-        $player->setClub($club);
+        $club->addPlayer($player);
 
         $coach = new Coach();
         $coach->setDni('BUDGET' . rand(1000, 9999) . chr(rand(65, 90)));
         $coach->setNombre('Budget' . uniqid());
         $coach->setApellidos('Coach');
         $coach->setSalario('2000000'); // 2M
-        $coach->setClub($club);
+        $club->addCoach($coach);
 
         // Act
         $this->entityManager->persist($club);
