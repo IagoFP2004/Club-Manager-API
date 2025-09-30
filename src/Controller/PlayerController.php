@@ -50,7 +50,7 @@ class PlayerController extends AbstractController
 
         if(!$players)
         {
-            return $this->json(['message' => 'No hay players registrados'],400);
+            return $this->json(['error' => 'No hay players registrados'],400);
         }
 
         $data = [];
@@ -184,12 +184,12 @@ class PlayerController extends AbstractController
             if($existeJugador){
                 return $this->json(['error' => 'El jugador ya existe en el club'], 400);
             }
-        }
-
-        // Validar presupuesto del club
-        $presupuestoRestante = $club->getPresupuestoRestante();
-        if ($presupuestoRestante < $salario) {
-            return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
+            
+            // Validar presupuesto del club
+            $presupuestoRestante = $club->getPresupuestoRestante();
+            if ($presupuestoRestante < $salario) {
+                return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
+            }
         }
 
 

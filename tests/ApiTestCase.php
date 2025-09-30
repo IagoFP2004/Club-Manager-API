@@ -7,20 +7,29 @@ use Doctrine\ORM\EntityManagerInterface;
 
 abstract class ApiTestCase extends WebTestCase
 {
-    protected EntityManagerInterface $entityManager;
+    protected ?EntityManagerInterface $entityManager = null;
 
     protected function setUp(): void
     {
-        $kernel = self::bootKernel();
-        $this->entityManager = $kernel->getContainer()
-            ->get('doctrine')
-            ->getManager();
+        // No bootear el kernel aquí, se hace automáticamente en createClient()
+        $this->entityManager = null;
+    }
+
+    protected function getEntityManager(): EntityManagerInterface
+    {
+        if (!$this->entityManager) {
+            $client = static::createClient();
+            $this->entityManager = $client->getContainer()->get('doctrine')->getManager();
+        }
+        return $this->entityManager;
     }
 
     protected function tearDown(): void
     {
+        if ($this->entityManager) {
+            $this->entityManager->close();
+        }
         parent::tearDown();
-        $this->entityManager->close();
     }
 
     protected function createTestClub(): array

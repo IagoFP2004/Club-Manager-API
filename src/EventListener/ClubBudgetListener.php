@@ -18,7 +18,7 @@ class ClubBudgetListener
         
         if ($entity instanceof Player || $entity instanceof Coach) {
             error_log("ClubBudgetListener: prePersist ejecutado para " . get_class($entity));
-            $this->updateClubBudget($entity->getClub(), $args->getObjectManager());
+            // No necesitamos hacer nada aquí ya que el cálculo del presupuesto es dinámico
         }
     }
 
@@ -28,7 +28,7 @@ class ClubBudgetListener
         
         if ($entity instanceof Player || $entity instanceof Coach) {
             error_log("ClubBudgetListener: preUpdate ejecutado para " . get_class($entity));
-            $this->updateClubBudget($entity->getClub(), $args->getObjectManager());
+            // No necesitamos hacer nada aquí ya que el cálculo del presupuesto es dinámico
         }
     }
 
@@ -37,17 +37,8 @@ class ClubBudgetListener
         $entity = $args->getObject();
         
         if ($entity instanceof Player || $entity instanceof Coach) {
-            $this->updateClubBudget($entity->getClub(), $args->getObjectManager());
-        }
-    }
-
-    private function updateClubBudget(?Club $club, EntityManagerInterface $entityManager): void
-    {
-        if ($club) {
-            error_log("ClubBudgetListener: Actualizando presupuesto para club " . $club->getNombre());
-            $club->guardarNuevoPresupuesto();
-            $entityManager->persist($club);
-            // En eventos pre, el flush se hace automáticamente después
+            error_log("ClubBudgetListener: preRemove ejecutado para " . get_class($entity));
+            // No necesitamos hacer nada aquí ya que el cálculo del presupuesto es dinámico
         }
     }
 }
