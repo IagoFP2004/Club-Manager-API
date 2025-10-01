@@ -14,6 +14,22 @@ use Knp\Component\Pager\PaginatorInterface;
 
 class ClubController extends AbstractController
 {
+    // Constante con todos los caracteres especiales prohibidos
+    public const ESPECIAL_CHARS = [',', '.', ';', ':', '!', '?', '¡', '¿', '"', "'", '-', '_', '+', '#', '$', '%', '&', '/', '(', ')', '=', '*', '^', '~', '`', '{', '}', '[', ']', '|', '\\', '@'];
+
+    /**
+     * Verifica si un string contiene caracteres especiales prohibidos
+     */
+    private function contieneCaracteresEspeciales(string $texto): bool
+    {
+        foreach(self::ESPECIAL_CHARS as $caracter){
+            if(str_contains($texto, $caracter)){
+                return true;
+            }
+        }
+        return false;
+    }
+
     #[Route('/clubs', name: 'club_list', methods: ['GET', 'OPTIONS'])]
     public function listClubs(EntityManagerInterface $entityManager, PaginatorInterface $paginator, Request $request): Response
     {
@@ -209,8 +225,8 @@ class ClubController extends AbstractController
             return $this->json(['error' => 'El nombre es requerido'], 400);
         }else if(strlen($nombre) < 2 || strlen($nombre) > 50){
             return $this->json(['error' => 'El nombre debe tener entre 2 y 50 caracteres'], 400);
-        }else if(str_contains($nombre, ',') || str_contains($nombre, '.') || str_contains($nombre, ';') || str_contains($nombre, ':') || str_contains($nombre, '!') || str_contains($nombre, '?') || str_contains($nombre, '¡') || str_contains($nombre, '¿')){
-            return $this->json(['error' => 'El nombre no puede contener comas, puntos, puntos y comas, dos puntos, signos de exclamación o signos de interrogación'], 400);
+        }else if($this->contieneCaracteresEspeciales($nombre)){
+            return $this->json(['error' => 'El nombre no puede contener caracteres especiales'], 400);
         }else if(preg_match('/\d/', $nombre)){
             return $this->json(['error' => 'El nombre no puede contener números'], 400);
         }else if(in_array(strtolower($nombre), array_map('strtolower', $nombresClubs))){
@@ -227,16 +243,16 @@ class ClubController extends AbstractController
             return $this->json(['error' => 'La ciudad es requerida'], 400);
         }else if(strlen($ciudad) < 3 || strlen($ciudad) > 50){
             return $this->json(['error' => 'La ciudad debe tener entre 3 y 50 caracteres'], 400);
-        }else if(str_contains($ciudad, ',') || str_contains($ciudad, '.') || str_contains($ciudad, ';') || str_contains($ciudad, ':') || str_contains($ciudad, '!') || str_contains($ciudad, '?') || str_contains($ciudad, '¡') || str_contains($ciudad, '¿')){
-            return $this->json(['error' => 'La ciudad no puede contener comas, puntos, puntos y comas, dos puntos, signos de exclamación o signos de interrogación'], 400);
+        }else if($this->contieneCaracteresEspeciales($ciudad)){
+            return $this->json(['error' => 'La ciudad no puede contener caracteres especiales'], 400);
         }
 
         if(empty($estadio)){
             return $this->json(['error' => 'El estadio es requerido'], 400);
         }else if(strlen($estadio) < 2 || strlen($estadio) > 50){
             return $this->json(['error' => 'El estadio debe tener entre 2 y 50 caracteres'], 400);
-        }else if(str_contains($estadio, ',') || str_contains($estadio, '.') || str_contains($estadio, ';') || str_contains($estadio, ':') || str_contains($estadio, '!') || str_contains($estadio, '?') || str_contains($estadio, '¡') || str_contains($estadio, '¿')){
-            return $this->json(['error' => 'El estadio no puede contener comas, puntos, puntos y comas, dos puntos, signos de exclamación o signos de interrogación'], 400);
+        }else if($this->contieneCaracteresEspeciales($estadio)){
+            return $this->json(['error' => 'El estadio no puede contener caracteres especiales'], 400);
         }else if(preg_match('/\d/', $estadio)){
             return $this->json(['error' => 'El estadio no puede contener números'], 400);
         }
@@ -298,8 +314,8 @@ class ClubController extends AbstractController
         if(isset($jsonData['nombre'])){
             if(strlen($jsonData['nombre']) < 2 || strlen($jsonData['nombre']) > 50){
                 return $this->json(['error' => 'El nombre debe tener entre 2 y 50 caracteres'], 400);
-            }else if(str_contains($jsonData['nombre'], ',') || str_contains($jsonData['nombre'], '.') || str_contains($jsonData['nombre'], ';') || str_contains($jsonData['nombre'], ':') || str_contains($jsonData['nombre'], '!') || str_contains($jsonData['nombre'], '?') || str_contains($jsonData['nombre'], '¡') || str_contains($jsonData['nombre'], '¿')){
-                return $this->json(['error' => 'El nombre no puede contener comas, puntos, puntos y comas, dos puntos, signos de exclamación o signos de interrogación'], 400);
+            }else if($this->contieneCaracteresEspeciales($jsonData['nombre'])){
+                return $this->json(['error' => 'El nombre no puede contener caracteres especiales'], 400);
             }else if(preg_match('/\d/', $jsonData['nombre'])){
                 return $this->json(['error' => 'El nombre no puede contener números'], 400);
             }else if(in_array(strtolower($jsonData['nombre']), array_map('strtolower', $nombresClubs))){
@@ -319,8 +335,8 @@ class ClubController extends AbstractController
         if(isset($jsonData['ciudad'])){
             if(strlen($jsonData['ciudad']) < 3 || strlen($jsonData['ciudad']) > 50){
                 return $this->json(['error' => 'La ciudad debe tener entre 3 y 50 caracteres'], 400);
-            }else if(str_contains($jsonData['ciudad'], ',') || str_contains($jsonData['ciudad'], '.') || str_contains($jsonData['ciudad'], ';') || str_contains($jsonData['ciudad'], ':') || str_contains($jsonData['ciudad'], '!') || str_contains($jsonData['ciudad'], '?') || str_contains($jsonData['ciudad'], '¡') || str_contains($jsonData['ciudad'], '¿')){
-                return $this->json(['error' => 'La ciudad no puede contener comas, puntos, puntos y comas, dos puntos, signos de exclamación o signos de interrogación'], 400);
+            }else if($this->contieneCaracteresEspeciales($jsonData['ciudad'])){
+                return $this->json(['error' => 'La ciudad no puede contener caracteres especiales'], 400);
             }else{
                 $club->setCiudad($jsonData['ciudad']);
             }
@@ -328,8 +344,8 @@ class ClubController extends AbstractController
         if(isset($jsonData['estadio'])){
             if(strlen($jsonData['estadio']) < 2 || strlen($jsonData['estadio']) > 50){
                 return $this->json(['error' => 'El estadio debe tener entre 2 y 50 caracteres'], 400);
-            }else if(str_contains($jsonData['estadio'], ',') || str_contains($jsonData['estadio'], '.') || str_contains($jsonData['estadio'], ';') || str_contains($jsonData['estadio'], ':') || str_contains($jsonData['estadio'], '!') || str_contains($jsonData['estadio'], '?') || str_contains($jsonData['estadio'], '¡') || str_contains($jsonData['estadio'], '¿')){
-                return $this->json(['error' => 'El estadio no puede contener comas, puntos, puntos y comas, dos puntos, signos de exclamación o signos de interrogación'], 400);
+            }else if($this->contieneCaracteresEspeciales($jsonData['estadio'])){
+                return $this->json(['error' => 'El estadio no puede contener caracteres especiales'], 400);
             }else if(preg_match('/\d/', $jsonData['estadio'])){
                 return $this->json(['error' => 'El estadio no puede contener números'], 400);
             }else{
