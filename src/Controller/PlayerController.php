@@ -17,6 +17,21 @@ use Knp\Component\Pager\PaginatorInterface;
 
 class PlayerController extends AbstractController
 {
+
+    public const ESPECIAL_CHARS = [
+        ',', '.', ';', ':', '!', '?', '¡', '¿', '"', "'", '-', '_', '+', '#', '$', '%', '&', '/', '(', ')', '=', '*', '^', '~', '`', '{', '}', '[', ']', '|', '\\', '@'
+    ];
+
+    private function contieneCaracteresEspeciales(string $texto): bool
+    {
+        foreach (self::ESPECIAL_CHARS as $caracter) {
+            if (str_contains($texto, $caracter)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     #[Route('/players', name: 'player_list', methods: ['GET', 'OPTIONS'])]
     public function listPlayers(EntityManagerInterface $entityManager, PaginatorInterface $paginator, Request $request): Response
     {
@@ -167,6 +182,19 @@ class PlayerController extends AbstractController
             return $this->json(['error' => 'Todos los campos son requeridos'], 400);
         }
 
+        // Validar caracteres especiales en nombre y apellidos (SIEMPRE)
+        if($this->contieneCaracteresEspeciales($nombre) || $this->contieneCaracteresEspeciales($apellidos)){
+            return $this->json(['error' => 'El nombre o los apellidos no pueden contener caracteres especiales'], 400);
+        }else if(preg_match('/\d/', $nombre)){
+            return $this->json(['error' => 'El nombre no puede contener números'], 400);
+        }
+
+        if(!is_numeric($salario)){
+            return $this->json(['error' => 'El salario debe ser un número'], 400);
+        }else if($salario <= 0){
+            return $this->json(['error' => 'El salario no puede ser 0 o negativo'], 400);
+        }
+
         // Validar que el club existe (si se proporciona)
         $club = null;
         if (!empty($id_club)) {
@@ -190,6 +218,7 @@ class PlayerController extends AbstractController
             if($existeJugador){
                 return $this->json(['error' => 'El jugador ya existe en el club'], 400);
             }
+
             
             // Validar presupuesto del club
             $presupuestoRestante = $club->getPresupuestoRestante();
@@ -204,13 +233,19 @@ class PlayerController extends AbstractController
         $player = new Player();
         $player->setNombre($nombre);
         $player->setApellidos($apellidos);
-        if($dorsal <= 0 || $dorsal> 99) {
-            return $this->json(['error' => 'El dorsal debe ser mayor que 0 y menor que 100'], 400);
-        }else if($club && in_array($dorsal, $dorsales)){
-            return $this->json(['error' => 'El dorsal ya existe en el club'], 400);
-        }else{
-            $player->setDorsal($dorsal);
+        if (!is_numeric($dorsal)) {
+            return $this->json(['error' => 'El dorsal debe ser un número'], 400);
         }
+        
+        if ($dorsal <= 0 || $dorsal > 99) {
+            return $this->json(['error' => 'El dorsal debe ser mayor que 0 y menor que 100'], 400);
+        }
+        
+        if ($club && in_array($dorsal, $dorsales)) {
+            return $this->json(['error' => 'El dorsal ya existe en el club'], 400);
+        }
+        
+        $player->setDorsal($dorsal);
         $player->setSalario($salario);
         $player->setClub($club);
 
@@ -247,25 +282,49 @@ class PlayerController extends AbstractController
         if(isset($jsonData['dni'])){
             return $this->json(['error' => 'El DNI no puede ser modificado'], 400);
         }
-        if(isset($jsonData['nombre'])){
+        
+        // Validar caracteres especiales en nombre y apellidos (SIEMPRE)
+        if (isset($jsonData['nombre'])) {
+            if ($this->contieneCaracteresEspeciales($jsonData['nombre'])) {
+                return $this->json(['error' => 'El nombre no puede contener caracteres especiales'], 400);
+            }
+            
+            if (preg_match('/\d/', $jsonData['nombre'])) {
+                return $this->json(['error' => 'El nombre no puede contener números'], 400);
+            }
+            
             $player->setNombre($jsonData['nombre']);
         }
-        if(isset($jsonData['apellidos'])){
+        
+        if (isset($jsonData['apellidos'])) {
+            if ($this->contieneCaracteresEspeciales($jsonData['apellidos'])) {
+                return $this->json(['error' => 'Los apellidos no pueden contener caracteres especiales'], 400);
+            }
+            
+            if (preg_match('/\d/', $jsonData['apellidos'])) {
+                return $this->json(['error' => 'Los apellidos no pueden contener números'], 400);
+            }
+            
             $player->setApellidos($jsonData['apellidos']);
         }
-        if(isset($jsonData['salario'])){
-            $player->setSalario($jsonData['salario']);
-            if($jsonData['salario'] <= 0){
+        if (isset($jsonData['salario'])) {
+            if ($jsonData['salario'] <= 0) {
                 return $this->json(['error' => 'El salario no puede ser 0 o negativo'], 400);
-            }else{
-                // Validar presupuesto del club (solo si el jugador tiene club)
-                if ($player->getClub()) {
-                    $presupuestoRestante = $player->getClub()->getPresupuestoRestante();
-                    if ($presupuestoRestante <= $jsonData['salario']) {
-                        return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
-                    }
+            }
+            
+            if (!is_numeric($jsonData['salario'])) {
+                return $this->json(['error' => 'El salario debe ser un número'], 400);
+            }
+            
+            // Validar presupuesto del club (solo si el jugador tiene club)
+            if ($player->getClub()) {
+                $presupuestoRestante = $player->getClub()->getPresupuestoRestante();
+                if ($presupuestoRestante <= $jsonData['salario']) {
+                    return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
                 }
             }
+            
+            $player->setSalario($jsonData['salario']);
         }
         
         // Actualizar el club PRIMERO
