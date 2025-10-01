@@ -149,8 +149,8 @@ class CoachController extends AbstractController
         $existingCoach = $entityManager->getRepository(Coach::class)->findOneBy(['dni' => $dni]);
         if ($existingCoach) {
             return $this->json(['error' => 'El DNI ya existe'], 400);
-        }else if(!preg_match('/^[0-9]{9}[A-Z]$/', $dni)){
-            return $this->json(['error' => 'El DNI no es válido'], 400);
+        }else if(!preg_match('/^[0-9]{8}[A-Z]$/', $dni)){
+            return $this->json(['error' => 'El DNI no es válido. Formato: 8 dígitos seguidos de una letra mayúscula'], 400);
         }
 
         // Verificar si el club existe (solo si se proporciona)
@@ -170,7 +170,7 @@ class CoachController extends AbstractController
         // Validar presupuesto del club
         if ($club) {
             $presupuestoRestante = $club->getPresupuestoRestante();
-            if ($presupuestoRestante < $salario) {
+            if ($presupuestoRestante <= $salario) {
                 return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
             }
         }
@@ -257,6 +257,16 @@ class CoachController extends AbstractController
             if($salario <= 0){
                 return $this->json(['error' => 'El salario no puede ser 0 o negativo'], 400);
             }else{
+                // Validar presupuesto del club si el entrenador tiene club
+                if ($coach->getClub()) {
+                    $presupuestoRestante = $coach->getClub()->getPresupuestoRestante();
+                    $salarioActual = (float)$coach->getSalario();
+                    $presupuestoDisponible = $presupuestoRestante + $salarioActual;
+                    
+                    if ($presupuestoDisponible <= $salario) {
+                        return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto disponible: ' . $presupuestoDisponible], 400);
+                    }
+                }
                 $coach->setSalario($salario);
             }
         }
@@ -281,9 +291,11 @@ class CoachController extends AbstractController
                 }
 
                 // Validar presupuesto del club
+                $salarioEntrenador = (float)$coach->getSalario();
                 $presupuestoRestante = $club->getPresupuestoRestante();
-                if ($presupuestoRestante < $salario) {
-                    return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
+                
+                if ($presupuestoRestante <= $salarioEntrenador) {
+                    return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante . ', Salario del entrenador: ' . $salarioEntrenador], 400);
                 }
                 
                 $coach->setClub($club);

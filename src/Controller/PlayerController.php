@@ -191,7 +191,7 @@ class PlayerController extends AbstractController
             
             // Validar presupuesto del club
             $presupuestoRestante = $club->getPresupuestoRestante();
-            if ($presupuestoRestante < $salario) {
+            if ($presupuestoRestante <= $salario) {
                 return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
             }
         }
@@ -259,7 +259,7 @@ class PlayerController extends AbstractController
                 // Validar presupuesto del club (solo si el jugador tiene club)
                 if ($player->getClub()) {
                     $presupuestoRestante = $player->getClub()->getPresupuestoRestante();
-                    if ($presupuestoRestante < $jsonData['salario']) {
+                    if ($presupuestoRestante <= $jsonData['salario']) {
                         return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
                     }
                 }
@@ -295,6 +295,14 @@ class PlayerController extends AbstractController
                     if($dorsalExiste){
                         return $this->json(['error' => 'El dorsal ' . $dorsalActual . ' ya existe en el club ' . $club->getNombre()], 400);
                     }
+                }
+                
+                // VALIDAR PRESUPUESTO antes de cambiar el club
+                $salarioJugador = (float)$player->getSalario();
+                $presupuestoRestante = $club->getPresupuestoRestante();
+                
+                if ($presupuestoRestante <= $salarioJugador) {
+                    return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante . ', Salario del jugador: ' . $salarioJugador], 400);
                 }
                 
                 $player->setClub($club);
