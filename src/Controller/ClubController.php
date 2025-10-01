@@ -190,8 +190,6 @@ class ClubController extends AbstractController
             return $this->json(['error' => 'Todos los campos son requeridos'], 400);
         }
 
-        
-
         if(empty($id_club)){
             return $this->json(['error' => 'El id_club es requerido'], 400);
         }else if(strlen($id_club) < 3 || strlen($id_club) > 5){
@@ -199,29 +197,58 @@ class ClubController extends AbstractController
         }else if($entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id_club])){
             return $this->json(['error' => 'El id_club ya existe'], 400);
         }
+
+        $nombresClubs = [];
+
+        $clubs = $entityManager->getRepository(Club::class)->findAll();
+        foreach($clubs as $club){
+            $nombresClubs[] = $club->getNombre();
+        }
+
         if(empty($nombre)){
             return $this->json(['error' => 'El nombre es requerido'], 400);
+        }else if(strlen($nombre) < 2 || strlen($nombre) > 50){
+            return $this->json(['error' => 'El nombre debe tener entre 2 y 50 caracteres'], 400);
+        }else if(str_contains($nombre, ',') || str_contains($nombre, '.') || str_contains($nombre, ';') || str_contains($nombre, ':') || str_contains($nombre, '!') || str_contains($nombre, '?') || str_contains($nombre, '¡') || str_contains($nombre, '¿')){
+            return $this->json(['error' => 'El nombre no puede contener comas, puntos, puntos y comas, dos puntos, signos de exclamación o signos de interrogación'], 400);
+        }else if(preg_match('/\d/', $nombre)){
+            return $this->json(['error' => 'El nombre no puede contener números'], 400);
+        }else if(in_array(strtolower($nombre), array_map('strtolower', $nombresClubs))){
+            return $this->json(['error' => 'El nombre del club ya existe'], 400);
         }
+
         if(empty($fundacion)){
             return $this->json(['error' => 'La fundacion es requerida'], 400);
         }else if($fundacion < 1857 || $fundacion > date('Y')){
             return $this->json(['error' => 'La fundacion debe ser entre 1800 y 2025'], 400);
         }
+
         if(empty($ciudad)){
             return $this->json(['error' => 'La ciudad es requerida'], 400);
+        }else if(strlen($ciudad) < 3 || strlen($ciudad) > 50){
+            return $this->json(['error' => 'La ciudad debe tener entre 3 y 50 caracteres'], 400);
+        }else if(str_contains($ciudad, ',') || str_contains($ciudad, '.') || str_contains($ciudad, ';') || str_contains($ciudad, ':') || str_contains($ciudad, '!') || str_contains($ciudad, '?') || str_contains($ciudad, '¡') || str_contains($ciudad, '¿')){
+            return $this->json(['error' => 'La ciudad no puede contener comas, puntos, puntos y comas, dos puntos, signos de exclamación o signos de interrogación'], 400);
         }
+
         if(empty($estadio)){
             return $this->json(['error' => 'El estadio es requerido'], 400);
+        }else if(strlen($estadio) < 2 || strlen($estadio) > 50){
+            return $this->json(['error' => 'El estadio debe tener entre 2 y 50 caracteres'], 400);
+        }else if(str_contains($estadio, ',') || str_contains($estadio, '.') || str_contains($estadio, ';') || str_contains($estadio, ':') || str_contains($estadio, '!') || str_contains($estadio, '?') || str_contains($estadio, '¡') || str_contains($estadio, '¿')){
+            return $this->json(['error' => 'El estadio no puede contener comas, puntos, puntos y comas, dos puntos, signos de exclamación o signos de interrogación'], 400);
+        }else if(preg_match('/\d/', $estadio)){
+            return $this->json(['error' => 'El estadio no puede contener números'], 400);
         }
+
         if(empty($presupuesto)){
             return $this->json(['error' => 'El presupuesto es requerido'], 400);
+        }else if(!is_numeric($presupuesto)){
+            return $this->json(['error' => 'El presupuesto debe ser un número'], 400);
         }else if($presupuesto <= 0){
             return $this->json(['error' => 'El presupuesto no puede ser 0 o negativo'], 400);
         }
 
-        if(!empty($errores)){
-            return $this->json(['error' => $errores], 400);
-        }
 
         $club = new Club();
         $club->setIdClub($id_club);
@@ -260,8 +287,27 @@ class ClubController extends AbstractController
                 return $this->json(['error' => 'El id_club no puede ser modificado'], 400);
             }
         }
+
+        $nombresClubs = [];
+
+        $clubs = $entityManager->getRepository(Club::class)->findAll();
+        foreach($clubs as $club){
+            $nombresClubs[] = $club->getNombre();
+        }
+
         if(isset($jsonData['nombre'])){
-            $club->setNombre($jsonData['nombre']);
+            if(strlen($jsonData['nombre']) < 2 || strlen($jsonData['nombre']) > 50){
+                return $this->json(['error' => 'El nombre debe tener entre 2 y 50 caracteres'], 400);
+            }else if(str_contains($jsonData['nombre'], ',') || str_contains($jsonData['nombre'], '.') || str_contains($jsonData['nombre'], ';') || str_contains($jsonData['nombre'], ':') || str_contains($jsonData['nombre'], '!') || str_contains($jsonData['nombre'], '?') || str_contains($jsonData['nombre'], '¡') || str_contains($jsonData['nombre'], '¿')){
+                return $this->json(['error' => 'El nombre no puede contener comas, puntos, puntos y comas, dos puntos, signos de exclamación o signos de interrogación'], 400);
+            }else if(preg_match('/\d/', $jsonData['nombre'])){
+                return $this->json(['error' => 'El nombre no puede contener números'], 400);
+            }else if(in_array(strtolower($jsonData['nombre']), array_map('strtolower', $nombresClubs))){
+                return $this->json(['error' => 'El nombre del club ya existe'], 400);
+            }else{
+                $club->setNombre($jsonData['nombre']);
+            }
+            
         }
         if(isset($jsonData['fundacion'])){
             if($jsonData['fundacion'] < 1857 || $jsonData['fundacion'] > date('Y')){
@@ -271,13 +317,29 @@ class ClubController extends AbstractController
             }
         }
         if(isset($jsonData['ciudad'])){
-            $club->setCiudad($jsonData['ciudad']);
+            if(strlen($jsonData['ciudad']) < 3 || strlen($jsonData['ciudad']) > 50){
+                return $this->json(['error' => 'La ciudad debe tener entre 3 y 50 caracteres'], 400);
+            }else if(str_contains($jsonData['ciudad'], ',') || str_contains($jsonData['ciudad'], '.') || str_contains($jsonData['ciudad'], ';') || str_contains($jsonData['ciudad'], ':') || str_contains($jsonData['ciudad'], '!') || str_contains($jsonData['ciudad'], '?') || str_contains($jsonData['ciudad'], '¡') || str_contains($jsonData['ciudad'], '¿')){
+                return $this->json(['error' => 'La ciudad no puede contener comas, puntos, puntos y comas, dos puntos, signos de exclamación o signos de interrogación'], 400);
+            }else{
+                $club->setCiudad($jsonData['ciudad']);
+            }
         }
         if(isset($jsonData['estadio'])){
-            $club->setEstadio($jsonData['estadio']);
+            if(strlen($jsonData['estadio']) < 2 || strlen($jsonData['estadio']) > 50){
+                return $this->json(['error' => 'El estadio debe tener entre 2 y 50 caracteres'], 400);
+            }else if(str_contains($jsonData['estadio'], ',') || str_contains($jsonData['estadio'], '.') || str_contains($jsonData['estadio'], ';') || str_contains($jsonData['estadio'], ':') || str_contains($jsonData['estadio'], '!') || str_contains($jsonData['estadio'], '?') || str_contains($jsonData['estadio'], '¡') || str_contains($jsonData['estadio'], '¿')){
+                return $this->json(['error' => 'El estadio no puede contener comas, puntos, puntos y comas, dos puntos, signos de exclamación o signos de interrogación'], 400);
+            }else if(preg_match('/\d/', $jsonData['estadio'])){
+                return $this->json(['error' => 'El estadio no puede contener números'], 400);
+            }else{
+                $club->setEstadio($jsonData['estadio']);
+            }
         }
         if(isset($jsonData['presupuesto'])){
-            if($jsonData['presupuesto'] <= 0){
+            if(!is_numeric($jsonData['presupuesto'])){
+                return $this->json(['error' => 'El presupuesto debe ser un número'], 400);
+            }else if($jsonData['presupuesto'] <= 0){
                 return $this->json(['error' => 'El presupuesto no puede ser 0 o negativo'], 400);
             }else{
                 $club->setPresupuesto($jsonData['presupuesto']);
