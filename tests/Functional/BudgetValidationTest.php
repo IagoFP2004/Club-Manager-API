@@ -96,7 +96,7 @@ class BudgetValidationTest extends WebTestCase
         
         // Intentar crear un entrenador con salario alto que excede el presupuesto
         $coachData = [
-            'dni' => '123456789A',
+            'dni' => '12345678A',
             'nombre' => 'Expensive',
             'apellidos' => 'Coach',
             'salario' => '1000000', // 1M - excede el presupuesto
@@ -249,7 +249,7 @@ class BudgetValidationTest extends WebTestCase
         
         // Crear entrenador con salario válido
         $coachData = [
-            'dni' => '987654321A',
+            'dni' => '98765432A',
             'nombre' => 'Valid',
             'apellidos' => 'Coach',
             'salario' => '3000000', // 3M

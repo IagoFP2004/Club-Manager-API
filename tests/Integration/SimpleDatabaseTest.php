@@ -22,8 +22,15 @@ class SimpleDatabaseTest extends KernelTestCase
 
     protected function tearDown(): void
     {
+        // Cerrar el EntityManager si existe
+        if (isset($this->entityManager)) {
+            $this->entityManager->close();
+        }
+        
+        // Restaurar el manejador de excepciones global para evitar warnings de pruebas riesgosas
+        restore_exception_handler();
+        
         parent::tearDown();
-        $this->entityManager->close();
     }
 
     public function testClubEntity(): void

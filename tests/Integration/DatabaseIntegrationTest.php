@@ -234,7 +234,7 @@ class DatabaseIntegrationTest extends KernelTestCase
         $club->addPlayer($player);
 
         $coach = new Coach();
-        $coach->setDni('987654321B');
+        $coach->setDni('98765432B');
         $coach->setNombre('Budget');
         $coach->setApellidos('Coach');
         $coach->setSalario('20000000');
@@ -257,5 +257,18 @@ class DatabaseIntegrationTest extends KernelTestCase
         $this->assertEquals(50000000.0, $savedClub->getPresupuestoRestante());
 
         // Cleanup - No es necesario, los tests se ejecutan en transacciones separadas
+    }
+    
+    protected function tearDown(): void
+    {
+        // Cerrar el EntityManager si existe
+        if (isset($this->entityManager)) {
+            $this->entityManager->close();
+        }
+        
+        // Restaurar el manejador de excepciones global para evitar warnings de pruebas riesgosas
+        restore_exception_handler();
+        
+        parent::tearDown();
     }
 }

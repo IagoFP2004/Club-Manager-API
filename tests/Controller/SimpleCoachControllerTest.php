@@ -132,4 +132,12 @@ class SimpleCoachControllerTest extends WebTestCase
             $this->assertJson($response->getContent());
         }
     }
+    
+    protected function tearDown(): void
+    {
+        // Restaurar el manejador de excepciones global para evitar warnings de pruebas riesgosas
+        restore_exception_handler();
+        
+        parent::tearDown();
+    }
 }
