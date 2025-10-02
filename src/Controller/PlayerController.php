@@ -277,10 +277,13 @@ class PlayerController extends AbstractController
     #[Route('/players/{id}', name: 'player_update', methods: ['PUT'])]
     public function updatePlayer(EntityManagerInterface $entityManager, $id, Request $request): Response
     {
+
+        $errors = [];
+
         $player = $entityManager->getRepository(Player::class)->find($id);
         
         if(!$player){
-            return $this->json(['error' => 'Player not found'], 404);
+            $errors['player'] = 'Player not found';
         }
 
         //Obtenemos los datos del JSON
@@ -288,24 +291,32 @@ class PlayerController extends AbstractController
         $jsonData = json_decode($body, true);
 
         if(empty($jsonData)){
-            return $this->json(['error' => 'No hay datos para actualizar'], 400);
+            $errors['json'] = 'No hay datos para actualizar';
         }
 
         $club = $player->getClub();
         $presupuesto_club = $club ? $club->getPresupuesto() : null;
         //Hacemos validaciones básicas
         if(isset($jsonData['dni'])){
-            return $this->json(['error' => 'El DNI no puede ser modificado'], 400);
+            $errors['dni'] = 'El DNI no puede ser modificado';
         }
         
         // Validar caracteres especiales en nombre y apellidos (SIEMPRE)
         if (isset($jsonData['nombre'])) {
             if ($this->contieneCaracteresEspeciales($jsonData['nombre'])) {
-                return $this->json(['error' => 'El nombre no puede contener caracteres especiales'], 400);
+                $errors['nombre'] = 'El nombre no puede contener caracteres especiales';
             }
             
             if (preg_match('/\d/', $jsonData['nombre'])) {
-                return $this->json(['error' => 'El nombre no puede contener números'], 400);
+                $errors['nombre'] = 'El nombre no puede contener números';
+            }
+
+            if(strlen($jsonData['nombre']) < 2 || strlen($jsonData['nombre']) > 50){
+                $errors['nombre'] = 'El nombre debe tener entre 2 y 50 caracteres';
+            }
+
+            if(nombre === " "){
+                $errors['nombre'] = 'El nombre no puede estar vacío';
             }
             
             $player->setNombre($jsonData['nombre']);
@@ -313,29 +324,37 @@ class PlayerController extends AbstractController
         
         if (isset($jsonData['apellidos'])) {
             if ($this->contieneCaracteresEspeciales($jsonData['apellidos'])) {
-                return $this->json(['error' => 'Los apellidos no pueden contener caracteres especiales'], 400);
+                $errors['apellidos'] = 'Los apellidos no pueden contener caracteres especiales';
             }
             
             if (preg_match('/\d/', $jsonData['apellidos'])) {
-                return $this->json(['error' => 'Los apellidos no pueden contener números'], 400);
+                $errors['apellidos'] = 'Los apellidos no pueden contener números';
+            }
+
+            if(strlen($jsonData['apellidos']) < 2 || strlen($jsonData['apellidos']) > 50){
+                $errors['apellidos'] = 'Los apellidos deben tener entre 2 y 50 caracteres';
+            }
+
+            if(apellidos === " "){
+                $errors['apellidos'] = 'Los apellidos no pueden estar vacíos';
             }
             
             $player->setApellidos($jsonData['apellidos']);
         }
         if (isset($jsonData['salario'])) {
             if ($jsonData['salario'] <= 0) {
-                return $this->json(['error' => 'El salario no puede ser 0 o negativo'], 400);
+                $errors['salario'] = 'El salario no puede ser 0 o negativo';
             }
             
             if (!is_numeric($jsonData['salario'])) {
-                return $this->json(['error' => 'El salario debe ser un número'], 400);
+                $errors['salario'] = 'El salario debe ser un número';
             }
             
             // Validar presupuesto del club (solo si el jugador tiene club)
             if ($player->getClub()) {
                 $presupuestoRestante = $player->getClub()->getPresupuestoRestante();
                 if ($presupuestoRestante <= $jsonData['salario']) {
-                    return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
+                    $errors['presupuesto'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante;
                 }
             }
             
@@ -351,7 +370,7 @@ class PlayerController extends AbstractController
                 // Si id_club tiene valor, buscar y asignar el club
                 $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $jsonData['id_club']]);
                 if(!$club){
-                    return $this->json(['error' => 'Club not found'], 404);
+                    $errors['club'] = 'Club not found';
                 }
                 
                 // VALIDAR DORSAL cuando se cambia el club
@@ -369,7 +388,7 @@ class PlayerController extends AbstractController
                     }
                     
                     if($dorsalExiste){
-                        return $this->json(['error' => 'El dorsal ' . $dorsalActual . ' ya existe en el club ' . $club->getNombre()], 400);
+                        $errors['dorsal'] = 'El dorsal ' . $dorsalActual . ' ya existe en el club ' . $club->getNombre().'por el jugador ' . $player->getNombre() . ' ' . $player->getApellidos();
                     }
                 }
                 
@@ -378,7 +397,7 @@ class PlayerController extends AbstractController
                 $presupuestoRestante = $club->getPresupuestoRestante();
                 
                 if ($presupuestoRestante <= $salarioJugador) {
-                    return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante . ', Salario del jugador: ' . $salarioJugador], 400);
+                    $errors['presupuesto'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante . ', Salario del jugador: ' . $salarioJugador;
                 }
                 
                 $player->setClub($club);
@@ -388,7 +407,7 @@ class PlayerController extends AbstractController
         // Ahora validar el dorsal con el club que se va a asignar
         if(isset($jsonData['dorsal'])){
             if($jsonData['dorsal'] <= 0 || $jsonData['dorsal'] > 99) {
-                return $this->json(['error' => 'El dorsal debe ser mayor que 0 y menor que 100'], 400);
+                $errors['dorsal'] = 'El dorsal debe ser mayor que 0 y menor que 100';
             }
             
             // Determinar qué club usar para la validación
@@ -415,7 +434,7 @@ class PlayerController extends AbstractController
                 }
                 
                 if($dorsalExiste){
-                    return $this->json(['error' => 'El dorsal ya existe en el club'], 400);
+                    $errors['dorsal'] = 'El dorsal ya existe en el club';
                 }
             }
             
@@ -426,7 +445,7 @@ class PlayerController extends AbstractController
         if ($player->getClub()) {
             $presupuestoRestante = $player->getClub()->getPresupuestoRestante();
             if ($presupuestoRestante < 0) {
-                return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
+                $errors['presupuesto'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante;
             }
         }
         
