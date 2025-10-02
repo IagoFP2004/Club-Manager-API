@@ -19,7 +19,7 @@ class PlayerController extends AbstractController
 {
 
     public const ESPECIAL_CHARS = [
-        ',', '.', ';', ':', '!', '?', '¡', '¿', '"', "'", '-', '_', '+', '#', '$', '%', '&', '/', '(', ')', '=', '*', '^', '~', '`', '{', '}', '[', ']', '|', '\\', '@'
+        ',', '.', ';', ':', '!', '?', '¡', '¿', '"', "'", '-', '_', '+', '#', '$', '%', '&', '/', '(', ')', '=', '*', '^', '~', '`', '{', '}', '[', ']', '|', '\\', '@','<','>'
     ];
 
     private function contieneCaracteresEspeciales(string $texto): bool
@@ -161,6 +161,9 @@ class PlayerController extends AbstractController
     #[Route('/players', name: 'player_create', methods: ['POST'])]
     public function createPlayer(EntityManagerInterface $entityManager, MailerInterface $mailer, Request $request): Response
     {
+
+        $errors = [];
+
         // Obtener los datos del JSON
         $body = $request->getContent();
         $jsonData = json_decode($body, true);
@@ -179,20 +182,28 @@ class PlayerController extends AbstractController
 
         //Todos los campos son requeridos si un campo falta lanza la alerta
         if (empty($nombre) || empty($apellidos) || empty($dorsal) || empty($salario)) {
-            return $this->json(['error' => 'Todos los campos son requeridos'], 400);
+            $errors['error'] = 'Todos los campos son requeridos';
         }
 
         // Validar caracteres especiales en nombre y apellidos (SIEMPRE)
         if($this->contieneCaracteresEspeciales($nombre) || $this->contieneCaracteresEspeciales($apellidos)){
-            return $this->json(['error' => 'El nombre o los apellidos no pueden contener caracteres especiales'], 400);
+            $errors['nombre/apellidos'] = 'El nombre o los apellidos no pueden contener caracteres especiales';
         }else if(preg_match('/\d/', $nombre)){
-            return $this->json(['error' => 'El nombre no puede contener números'], 400);
+            $errors['nombre'] = 'El nombre no puede contener números';
+        }else if(preg_match('/\d/', $apellidos)){
+            $errors['apellidos'] = 'Los apellidos no pueden contener números';
+        }else if(strlen($nombre) < 2 || strlen($nombre) > 50){
+            $errors['nombre'] = 'El nombre debe tener entre 2 y 50 caracteres';
+        }else if(strlen($apellidos) < 2 || strlen($apellidos) > 50){
+            $errors['apellidos'] = 'Los apellidos deben tener entre 2 y 50 caracteres';
+        }else if($nombre === " " || $apellidos === " "){
+            $errors['nombre/apellidos'] = 'El nombre y los apellidos no pueden estar vacíos';
         }
 
         if(!is_numeric($salario)){
-            return $this->json(['error' => 'El salario debe ser un número'], 400);
+            $errors['salario'] = 'El salario debe ser un número';
         }else if($salario <= 0){
-            return $this->json(['error' => 'El salario no puede ser 0 o negativo'], 400);
+            $errors['salario'] = 'El salario no puede ser 0 o negativo';
         }
 
         // Validar que el club existe (si se proporciona)
@@ -200,7 +211,7 @@ class PlayerController extends AbstractController
         if (!empty($id_club)) {
             $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id_club]);
             if (!$club) {
-                return $this->json(['error' => 'Club not found'], 404);
+                $errors['club'] = 'Club not found';
             }
         }
         
@@ -216,14 +227,14 @@ class PlayerController extends AbstractController
 
             $existeJugador = $entityManager->getRepository(Player::class)->findOneBy(['nombre' => $nombre, 'apellidos' => $apellidos, 'club' => $club]);
             if($existeJugador){
-                return $this->json(['error' => 'El jugador ya existe en el club'], 400);
+                $errors['jugador'] = 'El jugador ya existe en el club';
             }
 
             
             // Validar presupuesto del club
             $presupuestoRestante = $club->getPresupuestoRestante();
             if ($presupuestoRestante <= $salario) {
-                return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
+                $errors['presupuesto'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante;
             }
         }
 
@@ -234,15 +245,19 @@ class PlayerController extends AbstractController
         $player->setNombre($nombre);
         $player->setApellidos($apellidos);
         if (!is_numeric($dorsal)) {
-            return $this->json(['error' => 'El dorsal debe ser un número'], 400);
+            $errors['dorsal'] = 'El dorsal debe ser un número';
         }
         
         if ($dorsal <= 0 || $dorsal > 99) {
-            return $this->json(['error' => 'El dorsal debe ser mayor que 0 y menor que 100'], 400);
+            $errors['dorsal'] = 'El dorsal debe ser mayor que 0 y menor que 100';
         }
         
         if ($club && in_array($dorsal, $dorsales)) {
-            return $this->json(['error' => 'El dorsal ya existe en el club'], 400);
+            $errors['dorsal'] = 'El dorsal ya existe en el club';
+        }
+
+        if(!empty($errors)){
+            return $this->json(['error' => $errors], 400);
         }
         
         $player->setDorsal($dorsal);
