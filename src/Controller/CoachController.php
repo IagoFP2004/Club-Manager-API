@@ -328,7 +328,7 @@ class CoachController extends AbstractController
                     $salarioActual = (float)$coach->getSalario();
                     $presupuestoDisponible = $presupuestoRestante + $salarioActual;
                     
-                    if ($presupuestoDisponible <= $salario) {
+                    if ($presupuestoDisponible < $salario) {
                         $errors['salario'] = 'El Club no tiene presupuesto suficiente. Presupuesto disponible: ' . $presupuestoDisponible;
                     }else{
                         $coach->setSalario($salario);
@@ -362,8 +362,19 @@ class CoachController extends AbstractController
                 $salarioEntrenador = (float)$coach->getSalario();
                 $presupuestoRestante = $club->getPresupuestoRestante();
                 
-                if ($presupuestoRestante <= $salarioEntrenador) {
-                    $errors['salario'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante . ', Salario del entrenador: ' . $salarioEntrenador;
+                // Si el entrenador ya tiene un club, sumar su salario actual al presupuesto disponible
+                if ($coach->getClub() && $coach->getClub()->getId() !== $club->getId()) {
+                    // El entrenador viene de otro club, usar presupuesto restante del nuevo club
+                    if ($presupuestoRestante < $salarioEntrenador) {
+                        $errors['salario'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante . ', Salario del entrenador: ' . $salarioEntrenador;
+                    }
+                } elseif ($coach->getClub() && $coach->getClub()->getId() === $club->getId()) {
+                    // El entrenador ya está en este club, no hay problema de presupuesto
+                } else {
+                    // El entrenador no tiene club, usar presupuesto restante
+                    if ($presupuestoRestante < $salarioEntrenador) {
+                        $errors['salario'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante . ', Salario del entrenador: ' . $salarioEntrenador;
+                    }
                 }
                 
                 $coach->setClub($club);
@@ -371,12 +382,13 @@ class CoachController extends AbstractController
         }
 
         // Validar presupuesto final antes de guardar
-        if ($coach->getClub()) {
-            $presupuestoRestante = $coach->getClub()->getPresupuestoRestante();
-            if ($presupuestoRestante < 0) {
-                $errors['salario'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante;
-            }
-        }
+        // Nota: Esta validación puede ser redundante ya que validamos antes de setSalario
+        // if ($coach->getClub()) {
+        //     $presupuestoRestante = $coach->getClub()->getPresupuestoRestante();
+        //     if ($presupuestoRestante < 0) {
+        //         $errors['salario'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante;
+        //     }
+        // }
 
         if (!empty($errors)) {
             return $this->json(['error' => $errors], 400);

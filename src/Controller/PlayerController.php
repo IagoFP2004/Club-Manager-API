@@ -358,8 +358,11 @@ class PlayerController extends AbstractController
             // Validar presupuesto del club (solo si el jugador tiene club)
             if ($player->getClub()) {
                 $presupuestoRestante = $player->getClub()->getPresupuestoRestante();
-                if ($presupuestoRestante <= $jsonData['salario']) {
-                    $errors['presupuesto'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante;
+                $salarioActual = (float)$player->getSalario();
+                $presupuestoDisponible = $presupuestoRestante + $salarioActual;
+                
+                if ($presupuestoDisponible < $jsonData['salario']) {
+                    $errors['presupuesto'] = 'El Club no tiene presupuesto suficiente. Presupuesto disponible: ' . $presupuestoDisponible;
                 }
             }
             
@@ -402,8 +405,19 @@ class PlayerController extends AbstractController
                     $salarioJugador = (float)$player->getSalario();
                     $presupuestoRestante = $club->getPresupuestoRestante();
                     
-                    if ($presupuestoRestante <= $salarioJugador) {
-                        $errors['presupuesto'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante . ', Salario del jugador: ' . $salarioJugador;
+                    // Si el jugador ya tiene un club, sumar su salario actual al presupuesto disponible
+                    if ($player->getClub() && $player->getClub()->getId() !== $club->getId()) {
+                        // El jugador viene de otro club, usar presupuesto restante del nuevo club
+                        if ($presupuestoRestante < $salarioJugador) {
+                            $errors['presupuesto'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante . ', Salario del jugador: ' . $salarioJugador;
+                        }
+                    } elseif ($player->getClub() && $player->getClub()->getId() === $club->getId()) {
+                        // El jugador ya está en este club, no hay problema de presupuesto
+                    } else {
+                        // El jugador no tiene club, usar presupuesto restante
+                        if ($presupuestoRestante < $salarioJugador) {
+                            $errors['presupuesto'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante . ', Salario del jugador: ' . $salarioJugador;
+                        }
                     }
                     
                     $player->setClub($club);
@@ -454,12 +468,13 @@ class PlayerController extends AbstractController
         }
         
         // Validar presupuesto final antes de guardar
-        if ($player->getClub()) {
-            $presupuestoRestante = $player->getClub()->getPresupuestoRestante();
-            if ($presupuestoRestante < 0) {
-                $errors['presupuesto'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante;
-            }
-        }
+        // Nota: Esta validación puede ser redundante ya que validamos antes de setSalario
+        // if ($player->getClub()) {
+        //     $presupuestoRestante = $player->getClub()->getPresupuestoRestante();
+        //     if ($presupuestoRestante < 0) {
+        //         $errors['presupuesto'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante;
+        //     }
+        // }
         
         // Verificar si hay errores antes de guardar
         if(!empty($errors)){
