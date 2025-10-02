@@ -256,6 +256,8 @@ class ClubController extends AbstractController
             $errors['ciudad'] = 'La ciudad es requerida';
         }else if(strlen($ciudad) < 3 || strlen($ciudad) > 50){
             $errors['ciudad'] = 'La ciudad debe tener entre 3 y 50 caracteres';
+        }else if($this->tieneEspaciosAlInicio($ciudad)){
+            $errors['ciudad'] = 'La ciudad no puede empezar con espacios en blanco';
         }else if($this->contieneCaracteresEspeciales($ciudad)){
             $errors['ciudad'] = 'La ciudad no puede contener caracteres especiales';
         }
@@ -264,6 +266,8 @@ class ClubController extends AbstractController
             $errors['estadio'] = 'El estadio es requerido';
         }else if(strlen($estadio) < 2 || strlen($estadio) > 50){
             $errors['estadio'] = 'El estadio debe tener entre 2 y 50 caracteres';
+        }else if($this->tieneEspaciosAlInicio($estadio)){
+            $errors['estadio'] = 'El estadio no puede empezar con espacios en blanco';
         }else if($this->contieneCaracteresEspeciales($estadio)){
             $errors['estadio'] = 'El estadio no puede contener caracteres especiales';
         }else if(preg_match('/\d/', $estadio)){
@@ -358,6 +362,8 @@ class ClubController extends AbstractController
         if(isset($jsonData['ciudad'])){
             if(strlen($jsonData['ciudad']) < 3 || strlen($jsonData['ciudad']) > 50){
                 $errors['ciudad'] = 'La ciudad debe tener entre 3 y 50 caracteres';
+            }else if($this->tieneEspaciosAlInicio($jsonData['ciudad'])){
+                $errors['ciudad'] = 'La ciudad no puede empezar con espacios en blanco';
             }else if($this->contieneCaracteresEspeciales($jsonData['ciudad'])){
                 $errors['ciudad'] = 'La ciudad no puede contener caracteres especiales';
             }else{
@@ -367,6 +373,8 @@ class ClubController extends AbstractController
         if(isset($jsonData['estadio'])){
             if(strlen($jsonData['estadio']) < 2 || strlen($jsonData['estadio']) > 50){
                 $errors['estadio'] = 'El estadio debe tener entre 2 y 50 caracteres';
+            }else if($this->tieneEspaciosAlInicio($jsonData['estadio'])){
+                $errors['estadio'] = 'El estadio no puede empezar con espacios en blanco';
             }else if($this->contieneCaracteresEspeciales($jsonData['estadio'])){
                 $errors['estadio'] = 'El estadio no puede contener caracteres especiales';
             }else if(preg_match('/\d/', $jsonData['estadio'])){

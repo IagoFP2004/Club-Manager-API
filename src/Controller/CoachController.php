@@ -14,6 +14,30 @@ use Knp\Component\Pager\PaginatorInterface;
 
 class CoachController extends AbstractController
 {
+    // Constante con todos los caracteres especiales prohibidos
+    public const ESPECIAL_CHARS = [',', '.', ';', ':', '!', '?', '¡', '¿', '"', "'", '-', '_', '+', '#', '$', '%', '&', '/', '(', ')', '=', '*', '^', '~', '`', '{', '}', '[', ']', '|', '\\', '@','<','>'];
+
+    /**
+     * Verifica si un string contiene caracteres especiales prohibidos
+     */
+    private function contieneCaracteresEspeciales(string $texto): bool
+    {
+        foreach(self::ESPECIAL_CHARS as $caracter){
+            if(str_contains($texto, $caracter)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Verifica si un string tiene espacios en blanco al inicio
+     */
+    private function tieneEspaciosAlInicio(string $texto): bool
+    {
+        return $texto !== ltrim($texto);
+    }
+
     //Funcion que muestra el listado
     #[Route('/coaches', name: 'coach_list', methods: ['GET', 'OPTIONS'])]
     public function listCoaches(EntityManagerInterface $entityManager, PaginatorInterface $paginator, Request $request): Response
@@ -126,6 +150,7 @@ class CoachController extends AbstractController
     #[Route('/coaches', name: 'coach_insert', methods: ['POST'])]
     public function createCoach(EntityManagerInterface $entityManager, Request $request): Response
     {
+        $errors = [];
         // Obtener datos del JSON
         $body = $request->getContent();
         $data = json_decode($body, true);
@@ -142,9 +167,22 @@ class CoachController extends AbstractController
 
         // Verificar que todos los campos estén presentes (id_club es opcional)
         if (empty($dni) || empty($nombre) || empty($apellidos) || empty($salario)) {
-            return $this->json(['error' => 'Todos los campos son requeridos'], 400);
+            $errors['error'] = 'Todos los campos son requeridos';
         }
 
+        // Validar espacios al inicio en campos de texto
+        if ($this->tieneEspaciosAlInicio($nombre) || $this->tieneEspaciosAlInicio($apellidos)) {
+            $errors['nombre'] = 'El nombre o apellidos no pueden empezar con espacios en blanco';
+        }else if($this->contieneCaracteresEspeciales($nombre) || $this->contieneCaracteresEspeciales($apellidos)){
+            $errors['nombre'] = 'El nombre o apellidos no pueden contener caracteres especiales';
+        }else if(preg_match('/\d/', $nombre) || preg_match('/\d/', $apellidos)){
+            $errors['nombre'] = 'El nombre o apellidos no pueden contener números';
+        }else if(strlen($nombre) < 2 || strlen($nombre) > 50){
+            $errors['nombre'] = 'El nombre debe tener entre 2 y 50 caracteres';
+        }else if(strlen($apellidos) < 2 || strlen($apellidos) > 50){
+            $errors['apellidos'] = 'Los apellidos deben tener entre 2 y 50 caracteres';
+        }
+        
         // Verificar si el DNI ya existe
         $existingCoach = $entityManager->getRepository(Coach::class)->findOneBy(['dni' => $dni]);
         if ($existingCoach) {
@@ -158,12 +196,12 @@ class CoachController extends AbstractController
         if (!empty($id_club)) {
             $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id_club]);
             if (!$club) {
-                return $this->json(['error' => 'El club no existe'], 400);
+                $errors['id_club'] = 'El club no existe';
             } else {
                 // Verificar si el club ya tiene un entrenador
                 $existingCoachInClub = $entityManager->getRepository(Coach::class)->findOneBy(['club' => $club]);
                 if ($existingCoachInClub) {
-                    return $this->json(['error' => 'Este club ya tiene un entrenador asignado'], 400);
+                    $errors['id_club'] = 'Este club ya tiene un entrenador asignado';
                 }
             }
         }
@@ -171,12 +209,12 @@ class CoachController extends AbstractController
         if ($club) {
             $presupuestoRestante = $club->getPresupuestoRestante();
             if ($presupuestoRestante <= $salario) {
-                return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
+                $errors['salario'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante;
             }
         }
 
-        if (!empty($errores)) {
-            return $this->json(['error' => $errores], 400);
+        if (!empty($errors)) {
+            return $this->json(['error' => $errors], 400);
         }
 
         // Crear nuevo coach
@@ -218,7 +256,8 @@ class CoachController extends AbstractController
     #[Route('/coaches/{id}', name: 'coach_update', methods: ['PUT'])]
     public function updateCoach(EntityManagerInterface $entityManager, $id, Request $request): JsonResponse
     {
-        
+        $errors = [];
+
         $coach = $entityManager->getRepository(Coach::class)->find($id);
         if(!$coach){
             return $this->json(['error' => 'Coach not found'], 404);
@@ -244,18 +283,44 @@ class CoachController extends AbstractController
         // Actualizar campos si están presentes
         if(isset($jsonData['nombre']) || isset($jsonData['Nombre']) || isset($jsonData['NOMBRE'])){
             $nombre = $jsonData['nombre'] ?? $jsonData['Nombre'] ?? $jsonData['NOMBRE'];
-            $coach->setNombre($nombre);
+            
+            
+            if ($this->tieneEspaciosAlInicio($nombre)) {
+                $errors['nombre'] = 'El nombre no puede empezar con espacios en blanco';
+            }else if ($this->contieneCaracteresEspeciales($nombre)) {
+                $errors['nombre'] = 'El nombre no puede contener caracteres especiales';
+            }else if(preg_match('/\d/', $nombre)){
+                $errors['nombre'] = 'El nombre no puede contener números';
+            }else if(strlen($nombre) < 2 || strlen($nombre) > 50){
+                $errors['nombre'] = 'El nombre debe tener entre 2 y 50 caracteres';
+            }else{
+                $coach->setNombre($nombre);
+            }
         }
         
         if(isset($jsonData['apellidos']) || isset($jsonData['Apellidos']) || isset($jsonData['APELLIDOS'])){
             $apellidos = $jsonData['apellidos'] ?? $jsonData['Apellidos'] ?? $jsonData['APELLIDOS'];
-            $coach->setApellidos($apellidos);
+            
+            
+            if ($this->tieneEspaciosAlInicio($apellidos)) {
+                $errors['apellidos'] = 'Los apellidos no pueden empezar con espacios en blanco';
+            }else if ($this->contieneCaracteresEspeciales($apellidos)) {
+                $errors['apellidos'] = 'Los apellidos no pueden contener caracteres especiales';
+            }else if(preg_match('/\d/', $apellidos)){
+                $errors['apellidos'] = 'Los apellidos no pueden contener números';
+            }else if(strlen($apellidos) < 2 || strlen($apellidos) > 50){
+                $errors['apellidos'] = 'Los apellidos deben tener entre 2 y 50 caracteres';
+            }else{
+                $coach->setApellidos($apellidos);
+            }
         }
         
         if(isset($jsonData['salario']) || isset($jsonData['Salario']) || isset($jsonData['SALARIO'])){
             $salario = $jsonData['salario'] ?? $jsonData['Salario'] ?? $jsonData['SALARIO'];
             if($salario <= 0){
-                return $this->json(['error' => 'El salario no puede ser 0 o negativo'], 400);
+                $errors['salario'] = 'El salario no puede ser 0 o negativo';
+            }else if(!is_numeric($salario)){
+                $errors['salario'] = 'El salario debe ser un número';
             }else{
                 // Validar presupuesto del club si el entrenador tiene club
                 if ($coach->getClub()) {
@@ -264,10 +329,13 @@ class CoachController extends AbstractController
                     $presupuestoDisponible = $presupuestoRestante + $salarioActual;
                     
                     if ($presupuestoDisponible <= $salario) {
-                        return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto disponible: ' . $presupuestoDisponible], 400);
+                        $errors['salario'] = 'El Club no tiene presupuesto suficiente. Presupuesto disponible: ' . $presupuestoDisponible;
+                    }else{
+                        $coach->setSalario($salario);
                     }
+                }else{
+                    $coach->setSalario($salario);
                 }
-                $coach->setSalario($salario);
             }
         }
         
@@ -281,13 +349,13 @@ class CoachController extends AbstractController
                 // Si id_club tiene valor, buscar y asignar el club
                 $club = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id_club]);
                 if(!$club){
-                    return $this->json(['error' => 'El club no existe'], 400);
+                    $errors['id_club'] = 'El club no existe';
                 }
                 
                 // Verificar si el club ya tiene otro entrenador (excluyendo el actual)
                 $existingCoachInClub = $entityManager->getRepository(Coach::class)->findOneBy(['club' => $club]);
                 if($existingCoachInClub && $existingCoachInClub->getId() != (int)$id){
-                    return $this->json(['error' => 'Este club ya tiene un entrenador asignado'], 400);
+                    $errors['id_club'] = 'Este club ya tiene un entrenador asignado';
                 }
 
                 // Validar presupuesto del club
@@ -295,7 +363,7 @@ class CoachController extends AbstractController
                 $presupuestoRestante = $club->getPresupuestoRestante();
                 
                 if ($presupuestoRestante <= $salarioEntrenador) {
-                    return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante . ', Salario del entrenador: ' . $salarioEntrenador], 400);
+                    $errors['salario'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante . ', Salario del entrenador: ' . $salarioEntrenador;
                 }
                 
                 $coach->setClub($club);
@@ -306,8 +374,12 @@ class CoachController extends AbstractController
         if ($coach->getClub()) {
             $presupuestoRestante = $coach->getClub()->getPresupuestoRestante();
             if ($presupuestoRestante < 0) {
-                return $this->json(['error' => 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante], 400);
+                $errors['salario'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante;
             }
+        }
+
+        if (!empty($errors)) {
+            return $this->json(['error' => $errors], 400);
         }
 
         $entityManager->flush();
