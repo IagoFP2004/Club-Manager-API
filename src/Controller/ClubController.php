@@ -15,7 +15,7 @@ use Knp\Component\Pager\PaginatorInterface;
 class ClubController extends AbstractController
 {
     // Constante con todos los caracteres especiales prohibidos
-    public const ESPECIAL_CHARS = [',', '.', ';', ':', '!', '?', '¡', '¿', '"', "'", '-', '_', '+', '#', '$', '%', '&', '/', '(', ')', '=', '*', '^', '~', '`', '{', '}', '[', ']', '|', '\\', '@'];
+    public const ESPECIAL_CHARS = [',', '.', ';', ':', '!', '?', '¡', '¿', '"', "'", '-', '_', '+', '#', '$', '%', '&', '/', '(', ')', '=', '*', '^', '~', '`', '{', '}', '[', ']', '|', '\\', '@','<','>'];
 
     /**
      * Verifica si un string contiene caracteres especiales prohibidos
@@ -28,6 +28,14 @@ class ClubController extends AbstractController
             }
         }
         return false;
+    }
+
+    /**
+     * Verifica si un string tiene espacios en blanco al inicio
+     */
+    private function tieneEspaciosAlInicio(string $texto): bool
+    {
+        return $texto !== ltrim($texto);
     }
 
     #[Route('/clubs', name: 'club_list', methods: ['GET', 'OPTIONS'])]
@@ -188,11 +196,14 @@ class ClubController extends AbstractController
     #[Route('/clubs', name: 'club_create', methods: ['POST'])]
     public function createClub(EntityManagerInterface $entityManager, Request $request): Response
     {
+
+        $errors = [];
+
         $body = $request->getContent();
         $jsonData = json_decode($body, true);
         
         if(!$jsonData){
-            return $this->json(['error' => 'Invalid JSON'], 400);
+            $errors['json'] = 'Invalid JSON';
         }
 
         $id_club = $jsonData['id_club'] ?? null;
@@ -203,15 +214,15 @@ class ClubController extends AbstractController
         $presupuesto = $jsonData['presupuesto'] ?? null;
 
         if(empty($id_club) || empty($nombre) || empty($fundacion) || empty($ciudad) || empty($estadio) || empty($presupuesto)){
-            return $this->json(['error' => 'Todos los campos son requeridos'], 400);
+            $errors['error'] = 'Todos los campos son requeridos';
         }
 
         if(empty($id_club)){
-            return $this->json(['error' => 'El id_club es requerido'], 400);
+            $errors['id_club'] = 'El id_club es requerido';
         }else if(strlen($id_club) < 3 || strlen($id_club) > 5){
-            return $this->json(['error' => 'El id_club debe tener entre 3 y 5 caracteres'], 400);
+            $errors['id_club'] = 'El id_club debe tener entre 3 y 5 caracteres';
         }else if($entityManager->getRepository(Club::class)->findOneBy(['id_club' => $id_club])){
-            return $this->json(['error' => 'El id_club ya existe'], 400);
+            $errors['id_club'] = 'El id_club ya existe';
         }
 
         $nombresClubs = [];
@@ -222,49 +233,54 @@ class ClubController extends AbstractController
         }
 
         if(empty($nombre)){
-            return $this->json(['error' => 'El nombre es requerido'], 400);
+            $errors['nombre'] = 'El nombre es requerido';
         }else if(strlen($nombre) < 2 || strlen($nombre) > 50){
-            return $this->json(['error' => 'El nombre debe tener entre 2 y 50 caracteres'], 400);
+            $errors['nombre'] = 'El nombre debe tener entre 2 y 50 caracteres';
+        }else if($this->tieneEspaciosAlInicio($nombre)){
+            $errors['nombre'] = 'El nombre no puede empezar con espacios en blanco';
         }else if($this->contieneCaracteresEspeciales($nombre)){
-            return $this->json(['error' => 'El nombre no puede contener caracteres especiales'], 400);
+            $errors['nombre'] = 'El nombre no puede contener caracteres especiales';
         }else if(preg_match('/\d/', $nombre)){
-            return $this->json(['error' => 'El nombre no puede contener números'], 400);
+            $errors['nombre'] = 'El nombre no puede contener números';
         }else if(in_array(strtolower($nombre), array_map('strtolower', $nombresClubs))){
-            return $this->json(['error' => 'El nombre del club ya existe'], 400);
+            $errors['nombre'] = 'El nombre del club ya existe';
         }
 
         if(empty($fundacion)){
-            return $this->json(['error' => 'La fundacion es requerida'], 400);
+            $errors['fundacion'] = 'La fundacion es requerida';
         }else if($fundacion < 1857 || $fundacion > date('Y')){
-            return $this->json(['error' => 'La fundacion debe ser entre 1800 y 2025'], 400);
+            $errors['fundacion'] = 'La fundacion debe ser entre 1800 y 2025';
         }
 
         if(empty($ciudad)){
-            return $this->json(['error' => 'La ciudad es requerida'], 400);
+            $errors['ciudad'] = 'La ciudad es requerida';
         }else if(strlen($ciudad) < 3 || strlen($ciudad) > 50){
-            return $this->json(['error' => 'La ciudad debe tener entre 3 y 50 caracteres'], 400);
+            $errors['ciudad'] = 'La ciudad debe tener entre 3 y 50 caracteres';
         }else if($this->contieneCaracteresEspeciales($ciudad)){
-            return $this->json(['error' => 'La ciudad no puede contener caracteres especiales'], 400);
+            $errors['ciudad'] = 'La ciudad no puede contener caracteres especiales';
         }
 
         if(empty($estadio)){
-            return $this->json(['error' => 'El estadio es requerido'], 400);
+            $errors['estadio'] = 'El estadio es requerido';
         }else if(strlen($estadio) < 2 || strlen($estadio) > 50){
-            return $this->json(['error' => 'El estadio debe tener entre 2 y 50 caracteres'], 400);
+            $errors['estadio'] = 'El estadio debe tener entre 2 y 50 caracteres';
         }else if($this->contieneCaracteresEspeciales($estadio)){
-            return $this->json(['error' => 'El estadio no puede contener caracteres especiales'], 400);
+            $errors['estadio'] = 'El estadio no puede contener caracteres especiales';
         }else if(preg_match('/\d/', $estadio)){
-            return $this->json(['error' => 'El estadio no puede contener números'], 400);
+            $errors['estadio'] = 'El estadio no puede contener números';
         }
 
         if(empty($presupuesto)){
-            return $this->json(['error' => 'El presupuesto es requerido'], 400);
+            $errors['presupuesto'] = 'El presupuesto es requerido';
         }else if(!is_numeric($presupuesto)){
-            return $this->json(['error' => 'El presupuesto debe ser un número'], 400);
+            $errors['presupuesto'] = 'El presupuesto debe ser un número';
         }else if($presupuesto <= 0){
-            return $this->json(['error' => 'El presupuesto no puede ser 0 o negativo'], 400);
+            $errors['presupuesto'] = 'El presupuesto no puede ser 0 o negativo';
         }
 
+        if(!empty($errors)){
+            return $this->json(['error' => $errors], 400);
+        }
 
         $club = new Club();
         $club->setIdClub($id_club);
@@ -283,24 +299,27 @@ class ClubController extends AbstractController
     #[Route('/clubs/{id}', name: 'club_update', methods: ['PUT'])]
     public function updateClub(EntityManagerInterface $entityManager, $id, Request $request): Response
     {
+
+        $errors = [];
+
         $club = $entityManager->getRepository(Club::class)->findOneBy(['id' => $id]);
         
         if(!$club){
-            return $this->json(['error' => 'Club not found'], 404);
+            $errors['club'] = 'Club not found';
         }
 
         $body = $request->getContent();
         $jsonData = json_decode($body, true);
 
         if(!$jsonData){
-            return $this->json(['error' => 'No hay datos para actualizar'], 400);
+            $errors['json'] = 'No hay datos para actualizar';
         }
 
         if(isset($jsonData['id_club'])){
             $id_club_enviado = $jsonData['id_club'];
             $id_club_actual = $club->getIdClub();
             if($id_club_enviado !== $id_club_actual){
-                return $this->json(['error' => 'El id_club no puede ser modificado'], 400);
+                $errors['id_club'] = 'El id_club no puede ser modificado';
             }
         }
 
@@ -313,13 +332,17 @@ class ClubController extends AbstractController
 
         if(isset($jsonData['nombre'])){
             if(strlen($jsonData['nombre']) < 2 || strlen($jsonData['nombre']) > 50){
-                return $this->json(['error' => 'El nombre debe tener entre 2 y 50 caracteres'], 400);
+                $errors['nombre'] = 'El nombre debe tener entre 2 y 50 caracteres';
+            }else if($this->tieneEspaciosAlInicio($jsonData['nombre'])){
+                $errors['nombre'] = 'El nombre no puede empezar con espacios en blanco';
             }else if($this->contieneCaracteresEspeciales($jsonData['nombre'])){
-                return $this->json(['error' => 'El nombre no puede contener caracteres especiales'], 400);
+                $errors['nombre'] = 'El nombre no puede contener caracteres especiales';
             }else if(preg_match('/\d/', $jsonData['nombre'])){
-                return $this->json(['error' => 'El nombre no puede contener números'], 400);
+                $errors['nombre'] = 'El nombre no puede contener números';
             }else if(in_array(strtolower($jsonData['nombre']), array_map('strtolower', $nombresClubs))){
-                return $this->json(['error' => 'El nombre del club ya existe'], 400);
+                $errors['nombre'] = 'El nombre del club ya existe';
+            }else if(trim($jsonData['nombre']) === ''){
+                $errors['nombre'] = 'El nombre no puede estar vacío';
             }else{
                 $club->setNombre($jsonData['nombre']);
             }
@@ -327,36 +350,36 @@ class ClubController extends AbstractController
         }
         if(isset($jsonData['fundacion'])){
             if($jsonData['fundacion'] < 1857 || $jsonData['fundacion'] > date('Y')){
-                return $this->json(['error' => 'La fundacion debe ser entre 1800 y 2025'], 400);
+                $errors['fundacion'] = 'La fundacion debe ser entre 1800 y 2025';
             }else{
                 $club->setFundacion($jsonData['fundacion']);
             }
         }
         if(isset($jsonData['ciudad'])){
             if(strlen($jsonData['ciudad']) < 3 || strlen($jsonData['ciudad']) > 50){
-                return $this->json(['error' => 'La ciudad debe tener entre 3 y 50 caracteres'], 400);
+                $errors['ciudad'] = 'La ciudad debe tener entre 3 y 50 caracteres';
             }else if($this->contieneCaracteresEspeciales($jsonData['ciudad'])){
-                return $this->json(['error' => 'La ciudad no puede contener caracteres especiales'], 400);
+                $errors['ciudad'] = 'La ciudad no puede contener caracteres especiales';
             }else{
                 $club->setCiudad($jsonData['ciudad']);
             }
         }
         if(isset($jsonData['estadio'])){
             if(strlen($jsonData['estadio']) < 2 || strlen($jsonData['estadio']) > 50){
-                return $this->json(['error' => 'El estadio debe tener entre 2 y 50 caracteres'], 400);
+                $errors['estadio'] = 'El estadio debe tener entre 2 y 50 caracteres';
             }else if($this->contieneCaracteresEspeciales($jsonData['estadio'])){
-                return $this->json(['error' => 'El estadio no puede contener caracteres especiales'], 400);
+                $errors['estadio'] = 'El estadio no puede contener caracteres especiales';
             }else if(preg_match('/\d/', $jsonData['estadio'])){
-                return $this->json(['error' => 'El estadio no puede contener números'], 400);
+                $errors['estadio'] = 'El estadio no puede contener números';
             }else{
                 $club->setEstadio($jsonData['estadio']);
             }
         }
         if(isset($jsonData['presupuesto'])){
             if(!is_numeric($jsonData['presupuesto'])){
-                return $this->json(['error' => 'El presupuesto debe ser un número'], 400);
+                $errors['presupuesto'] = 'El presupuesto debe ser un número';
             }else if($jsonData['presupuesto'] <= 0){
-                return $this->json(['error' => 'El presupuesto no puede ser 0 o negativo'], 400);
+                $errors['presupuesto'] = 'El presupuesto no puede ser 0 o negativo';
             }else{
                 $club->setPresupuesto($jsonData['presupuesto']);
             }
@@ -381,21 +404,21 @@ class ClubController extends AbstractController
                     ->getResult();
 
                 if(empty($coach)){
-                    return $this->json(['error' => 'No se encontró ningún entrenador con ese nombre'], 400);
+                    $errors['entrenador'] = 'No se encontró ningún entrenador con ese nombre';
                 } else if(count($coach) > 1){
-                    return $this->json(['error' => 'Se encontraron múltiples entrenadores con ese nombre. Especifica más detalles.'], 400);
+                    $errors['entrenador'] = 'Se encontraron múltiples entrenadores con ese nombre. Especifica más detalles.';
                 } else {
                     $coachEncontrado = $coach[0];
                     
                     // Verificar si el club ya tiene un entrenador
                     $existingCoach = $entityManager->getRepository(Coach::class)->findOneBy(['club' => $club]);
                     if($existingCoach && $existingCoach->getId() !== $coachEncontrado->getId()){
-                        return $this->json(['error' => 'Este club ya tiene un entrenador asignado'], 400);
+                        $errors['entrenador'] = 'Este club ya tiene un entrenador asignado';
                     }
                     
                     // Verificar si el entrenador ya está en otro club
                     if($coachEncontrado->getClub() && $coachEncontrado->getClub()->getIdClub() !== $club->getIdClub()){
-                        return $this->json(['error' => 'Este entrenador ya está asignado a otro club'], 400);
+                        $errors['entrenador'] = 'Este entrenador ya está asignado a otro club';
                     }
                     
                     if(empty($errores['entrenador'])) {
@@ -408,6 +431,10 @@ class ClubController extends AbstractController
                     }
                 }
             }
+        }
+
+        if(!empty($errors)){
+            return $this->json(['error' => $errors], 400);
         }
          
         $entityManager->flush();

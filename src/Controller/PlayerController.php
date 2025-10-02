@@ -32,6 +32,14 @@ class PlayerController extends AbstractController
         return false;
     }
 
+    /**
+     * Verifica si un string tiene espacios en blanco al inicio
+     */
+    private function tieneEspaciosAlInicio(string $texto): bool
+    {
+        return $texto !== ltrim($texto);
+    }
+
     #[Route('/players', name: 'player_list', methods: ['GET', 'OPTIONS'])]
     public function listPlayers(EntityManagerInterface $entityManager, PaginatorInterface $paginator, Request $request): Response
     {
@@ -186,7 +194,11 @@ class PlayerController extends AbstractController
         }
 
         // Validar caracteres especiales en nombre y apellidos (SIEMPRE)
-        if($this->contieneCaracteresEspeciales($nombre) || $this->contieneCaracteresEspeciales($apellidos)){
+        if($this->tieneEspaciosAlInicio($nombre)){
+            $errors['nombre'] = 'El nombre no puede empezar con espacios en blanco';
+        }else if($this->tieneEspaciosAlInicio($apellidos)){
+            $errors['apellidos'] = 'Los apellidos no pueden empezar con espacios en blanco';
+        }else if($this->contieneCaracteresEspeciales($nombre) || $this->contieneCaracteresEspeciales($apellidos)){
             $errors['nombre/apellidos'] = 'El nombre o los apellidos no pueden contener caracteres especiales';
         }else if(preg_match('/\d/', $nombre)){
             $errors['nombre'] = 'El nombre no puede contener números';
@@ -196,7 +208,7 @@ class PlayerController extends AbstractController
             $errors['nombre'] = 'El nombre debe tener entre 2 y 50 caracteres';
         }else if(strlen($apellidos) < 2 || strlen($apellidos) > 50){
             $errors['apellidos'] = 'Los apellidos deben tener entre 2 y 50 caracteres';
-        }else if($nombre === " " || $apellidos === " "){
+        }else if(trim($nombre) === "" || trim($apellidos) === ""){
             $errors['nombre/apellidos'] = 'El nombre y los apellidos no pueden estar vacíos';
         }
 
@@ -303,43 +315,35 @@ class PlayerController extends AbstractController
         
         // Validar caracteres especiales en nombre y apellidos (SIEMPRE)
         if (isset($jsonData['nombre'])) {
-            if ($this->contieneCaracteresEspeciales($jsonData['nombre'])) {
+            if($this->tieneEspaciosAlInicio($jsonData['nombre'])){
+                $errors['nombre'] = 'El nombre no puede empezar con espacios en blanco';
+            }else if ($this->contieneCaracteresEspeciales($jsonData['nombre'])) {
                 $errors['nombre'] = 'El nombre no puede contener caracteres especiales';
-            }
-            
-            if (preg_match('/\d/', $jsonData['nombre'])) {
+            }else if (preg_match('/\d/', $jsonData['nombre'])) {
                 $errors['nombre'] = 'El nombre no puede contener números';
-            }
-
-            if(strlen($jsonData['nombre']) < 2 || strlen($jsonData['nombre']) > 50){
+            }else if(strlen($jsonData['nombre']) < 2 || strlen($jsonData['nombre']) > 50){
                 $errors['nombre'] = 'El nombre debe tener entre 2 y 50 caracteres';
-            }
-
-            if(nombre === " "){
+            }else if(trim($jsonData['nombre']) === ''){
                 $errors['nombre'] = 'El nombre no puede estar vacío';
+            }else{
+                $player->setNombre($jsonData['nombre']);
             }
-            
-            $player->setNombre($jsonData['nombre']);
         }
         
         if (isset($jsonData['apellidos'])) {
-            if ($this->contieneCaracteresEspeciales($jsonData['apellidos'])) {
+            if($this->tieneEspaciosAlInicio($jsonData['apellidos'])){
+                $errors['apellidos'] = 'Los apellidos no pueden empezar con espacios en blanco';
+            }else if ($this->contieneCaracteresEspeciales($jsonData['apellidos'])) {
                 $errors['apellidos'] = 'Los apellidos no pueden contener caracteres especiales';
-            }
-            
-            if (preg_match('/\d/', $jsonData['apellidos'])) {
-                $errors['apellidos'] = 'Los apellidos no pueden contener números';
-            }
-
-            if(strlen($jsonData['apellidos']) < 2 || strlen($jsonData['apellidos']) > 50){
+            }else if(strlen($jsonData['apellidos']) < 2 || strlen($jsonData['apellidos']) > 50){
                 $errors['apellidos'] = 'Los apellidos deben tener entre 2 y 50 caracteres';
-            }
-
-            if(apellidos === " "){
+            }else if (preg_match('/\d/', $jsonData['apellidos'])) {
+                $errors['apellidos'] = 'Los apellidos no pueden contener números';
+            }else if(trim($jsonData['apellidos']) === ""){
                 $errors['apellidos'] = 'Los apellidos no pueden estar vacíos';
+            }else{
+                $player->setApellidos($jsonData['apellidos']);
             }
-            
-            $player->setApellidos($jsonData['apellidos']);
         }
         if (isset($jsonData['salario'])) {
             if ($jsonData['salario'] <= 0) {
@@ -447,6 +451,11 @@ class PlayerController extends AbstractController
             if ($presupuestoRestante < 0) {
                 $errors['presupuesto'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante;
             }
+        }
+        
+        // Verificar si hay errores antes de guardar
+        if(!empty($errors)){
+            return $this->json(['errores' => $errors], 400);
         }
         
         // Guardar los cambios en la base de datos
