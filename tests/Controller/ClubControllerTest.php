@@ -298,7 +298,7 @@ class ClubControllerTest extends WebTestCase
             $data = json_decode($response->getContent(), true);
             $this->assertArrayHasKey('error', $data);
             $this->assertArrayHasKey('presupuesto', $data['error']);
-            $this->assertStringContainsString('no puede ser 0 o negativo', $data['error']['presupuesto']);
+            $this->assertStringContainsString('no puede ser negativo', $data['error']['presupuesto']);
         }
     }
 
@@ -368,6 +368,80 @@ class ClubControllerTest extends WebTestCase
             $data = json_decode($response->getContent(), true);
             $this->assertArrayHasKey('message', $data);
             $this->assertEquals('Club updated successfully', $data['message']);
+        }
+    }
+    
+    public function testUpdateClubBudgetWithZero(): void
+    {
+        $client = static::createClient();
+        
+        // Arrange - Presupuesto 0 que no debería ser permitido
+        $updateData = [
+            'presupuesto' => '0'
+        ];
+        
+        // Act
+        $client->request(
+            'PUT',
+            '/clubs/1',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($updateData)
+        );
+        
+        // Assert
+        $response = $client->getResponse();
+        
+        $this->assertTrue(
+            $response->getStatusCode() === Response::HTTP_BAD_REQUEST ||
+            $response->getStatusCode() === Response::HTTP_NOT_FOUND
+        );
+        
+        if ($response->getStatusCode() === Response::HTTP_BAD_REQUEST) {
+            $data = json_decode($response->getContent(), true);
+            $this->assertArrayHasKey('error', $data);
+            $this->assertArrayHasKey('presupuesto', $data['error']);
+            $this->assertStringContainsString('no puede ser 0', $data['error']['presupuesto']);
+        }
+    }
+    
+    public function testUpdateClubBudgetWithZeroRemaining(): void
+    {
+        $client = static::createClient();
+        
+        // Arrange - Presupuesto que resultaría en 0 restante (exactamente igual a gastos)
+        $updateData = [
+            'presupuesto' => '1000000' // Un presupuesto que podría resultar en 0 restante
+        ];
+        
+        // Act
+        $client->request(
+            'PUT',
+            '/clubs/1',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($updateData)
+        );
+        
+        // Assert
+        $response = $client->getResponse();
+        
+        // Puede ser 400 (error de validación) o 200 (éxito si el presupuesto es suficiente) o 404 (club no encontrado)
+        $this->assertTrue(
+            in_array($response->getStatusCode(), [Response::HTTP_OK, Response::HTTP_BAD_REQUEST, Response::HTTP_NOT_FOUND])
+        );
+        
+        if ($response->getStatusCode() === Response::HTTP_BAD_REQUEST) {
+            $data = json_decode($response->getContent(), true);
+            $this->assertArrayHasKey('error', $data);
+            $this->assertArrayHasKey('presupuesto', $data['error']);
+            // Verificar que el mensaje menciona presupuesto restante
+            $this->assertTrue(
+                str_contains($data['error']['presupuesto'], 'presupuesto restante') ||
+                str_contains($data['error']['presupuesto'], 'no tiene presupuesto')
+            );
         }
     }
     

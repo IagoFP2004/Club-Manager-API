@@ -319,6 +319,14 @@ class ClubController extends AbstractController
             $errors['json'] = 'No hay datos para actualizar';
         }
 
+        // Verificar si el club actualmente tiene presupuesto restante de 0
+        $presupuestoRestanteActual = $club->getPresupuestoRestante();
+        
+        // Si el presupuesto restante es 0 y se intenta hacer cambios que consuman presupuesto
+        if($presupuestoRestanteActual <= 0 && (isset($jsonData['presupuesto']) && (float)$jsonData['presupuesto'] <= (float)$club->getPresupuesto())){
+            $errors['presupuesto'] = 'No se pueden hacer cambios que reduzcan el presupuesto. El club no tiene presupuesto restante disponible (actual: ' . number_format($presupuestoRestanteActual, 2) . ')';
+        }
+
         if(isset($jsonData['id_club'])){
             $id_club_enviado = $jsonData['id_club'];
             $id_club_actual = $club->getIdClub();
@@ -391,13 +399,23 @@ class ClubController extends AbstractController
         if(isset($jsonData['presupuesto'])){
             if(!is_numeric($jsonData['presupuesto'])){
                 $errors['presupuesto'] = 'El presupuesto debe ser un número';
-            }else if($jsonData['presupuesto'] <= 0){
-                $errors['presupuesto'] = 'El presupuesto no puede ser 0 o negativo';
+            }else if($jsonData['presupuesto'] < 0){
+                $errors['presupuesto'] = 'El presupuesto no puede ser negativo';
+            }else if($jsonData['presupuesto'] == 0){
+                $errors['presupuesto'] = 'El presupuesto no puede ser 0';
             }else if(!$club->validarNuevoPresupuesto((float)$jsonData['presupuesto'])){
                 $gastosActuales = $club->getGastoJugadores() + $club->getGastosEntrenadores();
                 $errors['presupuesto'] = 'El presupuesto no puede ser menor a los gastos del club. Gastos actuales: ' . number_format($gastosActuales, 2);
             }else{
-                $club->setPresupuesto($jsonData['presupuesto']);
+                // Verificar que el nuevo presupuesto restante no sea 0
+                $gastosActuales = $club->getGastoJugadores() + $club->getGastosEntrenadores();
+                $nuevoPresupuestoRestante = (float)$jsonData['presupuesto'] - $gastosActuales;
+                
+                if($nuevoPresupuestoRestante <= 0){
+                    $errors['presupuesto'] = 'El presupuesto restante no puede ser 0 o negativo. Con este presupuesto quedarían: ' . number_format($nuevoPresupuestoRestante, 2);
+                }else{
+                    $club->setPresupuesto($jsonData['presupuesto']);
+                }
             }
         }
 
