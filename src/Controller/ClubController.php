@@ -309,7 +309,7 @@ class ClubController extends AbstractController
         $club = $entityManager->getRepository(Club::class)->findOneBy(['id' => $id]);
         
         if(!$club){
-            $errors['club'] = 'Club not found';
+            return $this->json(['error' => 'Club not found'], 404);
         }
 
         $body = $request->getContent();
@@ -329,9 +329,12 @@ class ClubController extends AbstractController
 
         $nombresClubs = [];
 
-        $clubs = $entityManager->getRepository(Club::class)->findAll();
-        foreach($clubs as $club){
-            $nombresClubs[] = $club->getNombre();
+        $allClubs = $entityManager->getRepository(Club::class)->findAll();
+        foreach($allClubs as $otherClub){
+            // Excluir el club actual de la validación de nombres duplicados
+            if($otherClub->getId() !== $club->getId()){
+                $nombresClubs[] = $otherClub->getNombre();
+            }
         }
 
         if(isset($jsonData['nombre'])){
@@ -343,10 +346,10 @@ class ClubController extends AbstractController
                 $errors['nombre'] = 'El nombre no puede contener caracteres especiales';
             }else if(preg_match('/\d/', $jsonData['nombre'])){
                 $errors['nombre'] = 'El nombre no puede contener números';
-            }else if(in_array(strtolower($jsonData['nombre']), array_map('strtolower', $nombresClubs))){
-                $errors['nombre'] = 'El nombre del club ya existe';
             }else if(trim($jsonData['nombre']) === ''){
                 $errors['nombre'] = 'El nombre no puede estar vacío';
+            }else if(in_array(strtolower($jsonData['nombre']), array_map('strtolower', $nombresClubs))){
+                $errors['nombre'] = 'El nombre del club ya existe';
             }else{
                 $club->setNombre($jsonData['nombre']);
             }
@@ -383,11 +386,16 @@ class ClubController extends AbstractController
                 $club->setEstadio($jsonData['estadio']);
             }
         }
+
+       
         if(isset($jsonData['presupuesto'])){
             if(!is_numeric($jsonData['presupuesto'])){
                 $errors['presupuesto'] = 'El presupuesto debe ser un número';
             }else if($jsonData['presupuesto'] <= 0){
                 $errors['presupuesto'] = 'El presupuesto no puede ser 0 o negativo';
+            }else if(!$club->validarNuevoPresupuesto((float)$jsonData['presupuesto'])){
+                $gastosActuales = $club->getGastoJugadores() + $club->getGastosEntrenadores();
+                $errors['presupuesto'] = 'El presupuesto no puede ser menor a los gastos del club. Gastos actuales: ' . number_format($gastosActuales, 2);
             }else{
                 $club->setPresupuesto($jsonData['presupuesto']);
             }

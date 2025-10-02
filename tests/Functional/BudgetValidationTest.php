@@ -65,7 +65,9 @@ class BudgetValidationTest extends WebTestCase
         
         $data = json_decode($client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('error', $data);
-        $this->assertStringContainsString('presupuesto', strtolower($data['error']));
+        // El error ahora es un array con diferentes campos
+        $errorMessage = is_array($data['error']) ? json_encode($data['error']) : $data['error'];
+        $this->assertStringContainsString('presupuesto', strtolower($errorMessage));
     }
 
     public function testCreateCoachExceedsBudget(): void
@@ -119,7 +121,9 @@ class BudgetValidationTest extends WebTestCase
         
         $data = json_decode($client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('error', $data);
-        $this->assertStringContainsString('presupuesto', strtolower($data['error']));
+        // El error ahora es un array con diferentes campos
+        $errorMessage = is_array($data['error']) ? json_encode($data['error']) : $data['error'];
+        $this->assertStringContainsString('presupuesto', strtolower($errorMessage));
     }
 
     public function testUpdatePlayerSalaryExceedsBudget(): void
@@ -197,7 +201,9 @@ class BudgetValidationTest extends WebTestCase
         
         $data = json_decode($client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('error', $data);
-        $this->assertStringContainsString('presupuesto', strtolower($data['error']));
+        // El error ahora es un array con diferentes campos
+        $errorMessage = is_array($data['error']) ? json_encode($data['error']) : $data['error'];
+        $this->assertStringContainsString('presupuesto', strtolower($errorMessage));
     }
 
     public function testValidBudgetOperations(): void

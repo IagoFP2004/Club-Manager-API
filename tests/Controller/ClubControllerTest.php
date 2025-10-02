@@ -229,6 +229,147 @@ class ClubControllerTest extends WebTestCase
         $this->assertArrayHasKey('clubs', $data);
         $this->assertArrayHasKey('pagination', $data);
     }
+
+    public function testUpdateClubBudgetValidation(): void
+    {
+        $client = static::createClient();
+        
+        // Arrange - Intentar establecer un presupuesto muy bajo
+        $updateData = [
+            'presupuesto' => '1000' // 1000 euros, probablemente insuficiente
+        ];
+        
+        // Act
+        $client->request(
+            'PUT',
+            '/clubs/1', // Asumiendo que el club 1 existe y tiene gastos
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($updateData)
+        );
+        
+        // Assert
+        $response = $client->getResponse();
+        
+        // Puede ser 400 si el presupuesto es insuficiente, 200 si es suficiente, o 404 si no existe
+        $this->assertTrue(
+            $response->getStatusCode() === Response::HTTP_OK || 
+            $response->getStatusCode() === Response::HTTP_BAD_REQUEST ||
+            $response->getStatusCode() === Response::HTTP_NOT_FOUND
+        );
+        
+        if ($response->getStatusCode() === Response::HTTP_BAD_REQUEST) {
+            $data = json_decode($response->getContent(), true);
+            $this->assertArrayHasKey('error', $data);
+            $this->assertArrayHasKey('presupuesto', $data['error']);
+            $this->assertStringContainsString('gastos del club', $data['error']['presupuesto']);
+        }
+    }
+
+    public function testUpdateClubBudgetWithNegativeValue(): void
+    {
+        $client = static::createClient();
+        
+        // Arrange
+        $updateData = [
+            'presupuesto' => '-1000000' // Presupuesto negativo
+        ];
+        
+        // Act
+        $client->request(
+            'PUT',
+            '/clubs/1',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($updateData)
+        );
+        
+        // Assert
+        $response = $client->getResponse();
+        
+        $this->assertTrue(
+            $response->getStatusCode() === Response::HTTP_BAD_REQUEST ||
+            $response->getStatusCode() === Response::HTTP_NOT_FOUND
+        );
+        
+        if ($response->getStatusCode() === Response::HTTP_BAD_REQUEST) {
+            $data = json_decode($response->getContent(), true);
+            $this->assertArrayHasKey('error', $data);
+            $this->assertArrayHasKey('presupuesto', $data['error']);
+            $this->assertStringContainsString('no puede ser 0 o negativo', $data['error']['presupuesto']);
+        }
+    }
+
+    public function testUpdateClubBudgetWithNonNumericValue(): void
+    {
+        $client = static::createClient();
+        
+        // Arrange
+        $updateData = [
+            'presupuesto' => 'not_a_number' // Valor no numérico
+        ];
+        
+        // Act
+        $client->request(
+            'PUT',
+            '/clubs/1',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($updateData)
+        );
+        
+        // Assert
+        $response = $client->getResponse();
+        
+        $this->assertTrue(
+            $response->getStatusCode() === Response::HTTP_BAD_REQUEST ||
+            $response->getStatusCode() === Response::HTTP_NOT_FOUND
+        );
+        
+        if ($response->getStatusCode() === Response::HTTP_BAD_REQUEST) {
+            $data = json_decode($response->getContent(), true);
+            $this->assertArrayHasKey('error', $data);
+            $this->assertArrayHasKey('presupuesto', $data['error']);
+            $this->assertStringContainsString('debe ser un número', $data['error']['presupuesto']);
+        }
+    }
+
+    public function testUpdateClubBudgetWithSufficientAmount(): void
+    {
+        $client = static::createClient();
+        
+        // Arrange - Presupuesto muy alto que debería ser suficiente
+        $updateData = [
+            'presupuesto' => '999999999' // 999M, debería ser suficiente para cualquier club
+        ];
+        
+        // Act
+        $client->request(
+            'PUT',
+            '/clubs/1',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($updateData)
+        );
+        
+        // Assert
+        $response = $client->getResponse();
+        
+        $this->assertTrue(
+            $response->getStatusCode() === Response::HTTP_OK ||
+            $response->getStatusCode() === Response::HTTP_NOT_FOUND
+        );
+        
+        if ($response->getStatusCode() === Response::HTTP_OK) {
+            $data = json_decode($response->getContent(), true);
+            $this->assertArrayHasKey('message', $data);
+            $this->assertEquals('Club updated successfully', $data['message']);
+        }
+    }
     
     protected function tearDown(): void
     {

@@ -194,21 +194,21 @@ class PlayerController extends AbstractController
         }
 
         // Validar caracteres especiales en nombre y apellidos (SIEMPRE)
-        if($this->tieneEspaciosAlInicio($nombre)){
+        if($nombre !== null && $this->tieneEspaciosAlInicio($nombre)){
             $errors['nombre'] = 'El nombre no puede empezar con espacios en blanco';
-        }else if($this->tieneEspaciosAlInicio($apellidos)){
+        }else if($apellidos !== null && $this->tieneEspaciosAlInicio($apellidos)){
             $errors['apellidos'] = 'Los apellidos no pueden empezar con espacios en blanco';
-        }else if($this->contieneCaracteresEspeciales($nombre) || $this->contieneCaracteresEspeciales($apellidos)){
+        }else if(($nombre !== null && $this->contieneCaracteresEspeciales($nombre)) || ($apellidos !== null && $this->contieneCaracteresEspeciales($apellidos))){
             $errors['nombre/apellidos'] = 'El nombre o los apellidos no pueden contener caracteres especiales';
-        }else if(preg_match('/\d/', $nombre)){
+        }else if($nombre !== null && preg_match('/\d/', $nombre)){
             $errors['nombre'] = 'El nombre no puede contener números';
-        }else if(preg_match('/\d/', $apellidos)){
+        }else if($apellidos !== null && preg_match('/\d/', $apellidos)){
             $errors['apellidos'] = 'Los apellidos no pueden contener números';
-        }else if(strlen($nombre) < 2 || strlen($nombre) > 50){
+        }else if($nombre !== null && (strlen($nombre) < 2 || strlen($nombre) > 50)){
             $errors['nombre'] = 'El nombre debe tener entre 2 y 50 caracteres';
-        }else if(strlen($apellidos) < 2 || strlen($apellidos) > 50){
+        }else if($apellidos !== null && (strlen($apellidos) < 2 || strlen($apellidos) > 50)){
             $errors['apellidos'] = 'Los apellidos deben tener entre 2 y 50 caracteres';
-        }else if(trim($nombre) === "" || trim($apellidos) === ""){
+        }else if(($nombre !== null && trim($nombre) === "") || ($apellidos !== null && trim($apellidos) === "")){
             $errors['nombre/apellidos'] = 'El nombre y los apellidos no pueden estar vacíos';
         }
 
@@ -252,10 +252,7 @@ class PlayerController extends AbstractController
 
 
 
-        //Creamos al jugador y le asignamos los datos
-        $player = new Player();
-        $player->setNombre($nombre);
-        $player->setApellidos($apellidos);
+        // Validar dorsal
         if (!is_numeric($dorsal)) {
             $errors['dorsal'] = 'El dorsal debe ser un número';
         }
@@ -271,7 +268,11 @@ class PlayerController extends AbstractController
         if(!empty($errors)){
             return $this->json(['error' => $errors], 400);
         }
-        
+
+        //Creamos al jugador y le asignamos los datos (solo si no hay errores)
+        $player = new Player();
+        $player->setNombre($nombre);
+        $player->setApellidos($apellidos);
         $player->setDorsal($dorsal);
         $player->setSalario($salario);
         $player->setClub($club);
@@ -295,7 +296,7 @@ class PlayerController extends AbstractController
         $player = $entityManager->getRepository(Player::class)->find($id);
         
         if(!$player){
-            $errors['player'] = 'Player not found';
+            return $this->json(['error' => 'Player not found'], 404);
         }
 
         //Obtenemos los datos del JSON
@@ -367,8 +368,8 @@ class PlayerController extends AbstractController
         
         // Actualizar el club PRIMERO
         if(isset($jsonData['id_club'])){
-            if(empty($jsonData['id_club'])) {
-                // Si id_club está vacío, quitar el club del jugador
+            if(empty($jsonData['id_club']) || $jsonData['id_club'] === null || $jsonData['id_club'] === '') {
+                // Si id_club está vacío, es null o es string vacío, quitar el club del jugador
                 $player->setClub(null);
             } else {
                 // Si id_club tiene valor, buscar y asignar el club
@@ -378,33 +379,35 @@ class PlayerController extends AbstractController
                 }
                 
                 // VALIDAR DORSAL cuando se cambia el club
-                $dorsalActual = $player->getDorsal();
-                if($dorsalActual) {
-                    // Verificar si el dorsal actual ya existe en el nuevo club
-                    $playersDelNuevoClub = $entityManager->getRepository(Player::class)->findBy(['club' => $club]);
-                    $dorsalExiste = false;
-                    
-                    foreach($playersDelNuevoClub as $p){
-                        if($p->getId() !== $player->getId() && $p->getDorsal() == $dorsalActual){
-                            $dorsalExiste = true;
-                            break;
+                if($club) { // Solo validar si el club existe
+                    $dorsalActual = $player->getDorsal();
+                    if($dorsalActual) {
+                        // Verificar si el dorsal actual ya existe en el nuevo club
+                        $playersDelNuevoClub = $entityManager->getRepository(Player::class)->findBy(['club' => $club]);
+                        $dorsalExiste = false;
+                        
+                        foreach($playersDelNuevoClub as $p){
+                            if($p->getId() !== $player->getId() && $p->getDorsal() == $dorsalActual){
+                                $dorsalExiste = true;
+                                break;
+                            }
+                        }
+                        
+                        if($dorsalExiste){
+                            $errors['dorsal'] = 'El dorsal ' . $dorsalActual . ' ya existe en el club ' . $club->getNombre().' por el jugador ' . $player->getNombre() . ' ' . $player->getApellidos();
                         }
                     }
                     
-                    if($dorsalExiste){
-                        $errors['dorsal'] = 'El dorsal ' . $dorsalActual . ' ya existe en el club ' . $club->getNombre().'por el jugador ' . $player->getNombre() . ' ' . $player->getApellidos();
+                    // VALIDAR PRESUPUESTO antes de cambiar el club
+                    $salarioJugador = (float)$player->getSalario();
+                    $presupuestoRestante = $club->getPresupuestoRestante();
+                    
+                    if ($presupuestoRestante <= $salarioJugador) {
+                        $errors['presupuesto'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante . ', Salario del jugador: ' . $salarioJugador;
                     }
+                    
+                    $player->setClub($club);
                 }
-                
-                // VALIDAR PRESUPUESTO antes de cambiar el club
-                $salarioJugador = (float)$player->getSalario();
-                $presupuestoRestante = $club->getPresupuestoRestante();
-                
-                if ($presupuestoRestante <= $salarioJugador) {
-                    $errors['presupuesto'] = 'El Club no tiene presupuesto suficiente. Presupuesto restante: ' . $presupuestoRestante . ', Salario del jugador: ' . $salarioJugador;
-                }
-                
-                $player->setClub($club);
             }
         }
         
@@ -414,17 +417,21 @@ class PlayerController extends AbstractController
                 $errors['dorsal'] = 'El dorsal debe ser mayor que 0 y menor que 100';
             }
             
-            // Determinar qué club usar para la validación
+            // Determinar qué club usar para la validación del dorsal
             $clubParaValidar = null;
             
             // Si se está actualizando el club, usar el nuevo club
-            if(isset($jsonData['id_club']) && !empty($jsonData['id_club'])) {
-                $clubParaValidar = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $jsonData['id_club']]);
+            if(isset($jsonData['id_club'])) {
+                if(!empty($jsonData['id_club']) && $jsonData['id_club'] !== null && $jsonData['id_club'] !== '') {
+                    $clubParaValidar = $entityManager->getRepository(Club::class)->findOneBy(['id_club' => $jsonData['id_club']]);
+                }
+                // Si id_club está vacío, null o string vacío, no hay club para validar
             } else {
-                // Si no se está actualizando el club, usar el club actual
+                // Si no se está actualizando el club, usar el club actual del jugador
                 $clubParaValidar = $player->getClub();
             }
             
+            // Solo validar dorsales duplicados si el jugador tiene o va a tener un club
             if($clubParaValidar) {
                 // Verificar si el dorsal ya existe en otros jugadores del club
                 $playersDelClub = $entityManager->getRepository(Player::class)->findBy(['club' => $clubParaValidar]);
@@ -441,6 +448,7 @@ class PlayerController extends AbstractController
                     $errors['dorsal'] = 'El dorsal ya existe en el club';
                 }
             }
+            // Si no hay club, se permite cualquier dorsal válido (ya validado arriba)
             
             $player->setDorsal($jsonData['dorsal']);
         }
@@ -455,7 +463,7 @@ class PlayerController extends AbstractController
         
         // Verificar si hay errores antes de guardar
         if(!empty($errors)){
-            return $this->json(['errores' => $errors], 400);
+            return $this->json(['error' => $errors], 400);
         }
         
         // Guardar los cambios en la base de datos

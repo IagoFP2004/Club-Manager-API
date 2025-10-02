@@ -168,4 +168,97 @@ class ClubTest extends TestCase
         $this->assertCount(0, $club->getCoaches());
         $this->assertFalse($club->getCoaches()->contains($coach));
     }
+
+    public function testValidarNuevoPresupuestoSuficiente(): void
+    {
+        // Arrange
+        $club = new Club();
+        $player = new Player();
+        $coach = new Coach();
+        
+        $player->setSalario('40000000'); // 40M
+        $coach->setSalario('20000000');  // 20M
+        // Total gastos: 60M
+        
+        $club->addPlayer($player);
+        $club->addCoach($coach);
+        
+        // Act & Assert
+        // Presupuesto de 70M debería ser suficiente para gastos de 60M
+        $this->assertTrue($club->validarNuevoPresupuesto(70000000.0));
+        
+        // Presupuesto de 60M debería ser exactamente suficiente
+        $this->assertTrue($club->validarNuevoPresupuesto(60000000.0));
+    }
+
+    public function testValidarNuevoPresupuestoInsuficiente(): void
+    {
+        // Arrange
+        $club = new Club();
+        $player = new Player();
+        $coach = new Coach();
+        
+        $player->setSalario('40000000'); // 40M
+        $coach->setSalario('20000000');  // 20M
+        // Total gastos: 60M
+        
+        $club->addPlayer($player);
+        $club->addCoach($coach);
+        
+        // Act & Assert
+        // Presupuesto de 50M no debería ser suficiente para gastos de 60M
+        $this->assertFalse($club->validarNuevoPresupuesto(50000000.0));
+        
+        // Presupuesto de 59.99M no debería ser suficiente
+        $this->assertFalse($club->validarNuevoPresupuesto(59990000.0));
+    }
+
+    public function testValidarNuevoPresupuestoSinGastos(): void
+    {
+        // Arrange
+        $club = new Club();
+        // Club sin jugadores ni entrenadores (gastos = 0)
+        
+        // Act & Assert
+        // Cualquier presupuesto positivo debería ser válido
+        $this->assertTrue($club->validarNuevoPresupuesto(1000000.0));
+        $this->assertTrue($club->validarNuevoPresupuesto(0.0));
+    }
+
+    public function testValidarNuevoPresupuestoSoloJugadores(): void
+    {
+        // Arrange
+        $club = new Club();
+        $player1 = new Player();
+        $player2 = new Player();
+        
+        $player1->setSalario('30000000'); // 30M
+        $player2->setSalario('25000000'); // 25M
+        // Total gastos: 55M (solo jugadores, sin entrenadores)
+        
+        $club->addPlayer($player1);
+        $club->addPlayer($player2);
+        
+        // Act & Assert
+        $this->assertTrue($club->validarNuevoPresupuesto(60000000.0));
+        $this->assertTrue($club->validarNuevoPresupuesto(55000000.0));
+        $this->assertFalse($club->validarNuevoPresupuesto(50000000.0));
+    }
+
+    public function testValidarNuevoPresupuestoSoloEntrenadores(): void
+    {
+        // Arrange
+        $club = new Club();
+        $coach = new Coach();
+        
+        $coach->setSalario('15000000'); // 15M
+        // Total gastos: 15M (solo entrenadores, sin jugadores)
+        
+        $club->addCoach($coach);
+        
+        // Act & Assert
+        $this->assertTrue($club->validarNuevoPresupuesto(20000000.0));
+        $this->assertTrue($club->validarNuevoPresupuesto(15000000.0));
+        $this->assertFalse($club->validarNuevoPresupuesto(10000000.0));
+    }
 }

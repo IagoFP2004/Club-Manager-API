@@ -193,4 +193,20 @@ class Club
     {
         return (float)$this->presupuesto - (($this->getGastoJugadores() ?? 0) + ($this->getGastosEntrenadores() ?? 0));
     }
+
+    public function validarActualizacionPresupuesto(): bool
+    {
+        // Si los gastos totales son menores o iguales al presupuesto actual, se puede actualizar
+        if(($this->getGastoJugadores() + $this->getGastosEntrenadores()) <= $this->getPresupuesto()){
+            return true;
+        }
+        return false;
+    }
+
+    public function validarNuevoPresupuesto(float $nuevoPresupuesto): bool
+    {
+        // Si los gastos totales son menores o iguales al nuevo presupuesto, se puede establecer
+        $gastosActuales = $this->getGastoJugadores() + $this->getGastosEntrenadores();
+        return $gastosActuales <= $nuevoPresupuesto;
+    }
 }

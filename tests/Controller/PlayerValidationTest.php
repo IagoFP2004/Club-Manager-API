@@ -69,7 +69,9 @@ class PlayerValidationTest extends ApiTestCase
         
         $data = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('error', $data);
-        $this->assertStringContainsString('caracteres especiales', $data['error']);
+        // El error ahora es un array con diferentes campos
+        $errorMessage = is_array($data['error']) ? json_encode($data['error']) : $data['error'];
+        $this->assertStringContainsString('caracteres especiales', $errorMessage);
     }
 
     public function testCreatePlayerWithAsteriskNameWithClub(): void
@@ -98,7 +100,9 @@ class PlayerValidationTest extends ApiTestCase
         
         $data = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('error', $data);
-        $this->assertStringContainsString('caracteres especiales', $data['error']);
+        // El error ahora es un array con diferentes campos
+        $errorMessage = is_array($data['error']) ? json_encode($data['error']) : $data['error'];
+        $this->assertStringContainsString('caracteres especiales', $errorMessage);
     }
 
     public function testCreatePlayerWithValidNameWithoutClub(): void
@@ -156,7 +160,9 @@ class PlayerValidationTest extends ApiTestCase
         
         $data = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('error', $data);
-        $this->assertStringContainsString('caracteres especiales', $data['error']);
+        // El error ahora es un array con diferentes campos
+        $errorMessage = is_array($data['error']) ? json_encode($data['error']) : $data['error'];
+        $this->assertStringContainsString('caracteres especiales', $errorMessage);
     }
 
     protected function tearDown(): void
