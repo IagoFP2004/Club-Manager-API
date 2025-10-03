@@ -361,7 +361,7 @@ class PlayerController extends AbstractController
                 $salarioActual = (float)$player->getSalario();
                 $presupuestoDisponible = $presupuestoRestante + $salarioActual;
                 
-                if ($presupuestoDisponible < $jsonData['salario']) {
+                if ($presupuestoDisponible <= $jsonData['salario']) {
                     $errors['presupuesto'] = 'El Club no tiene presupuesto suficiente. Presupuesto disponible: ' . $presupuestoDisponible;
                 }
             }
