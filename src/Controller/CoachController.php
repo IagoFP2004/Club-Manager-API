@@ -328,7 +328,7 @@ class CoachController extends AbstractController
                     $salarioActual = (float)$coach->getSalario();
                     $presupuestoDisponible = $presupuestoRestante + $salarioActual;
                     
-                    if ($presupuestoDisponible < $salario) {
+                    if ($presupuestoDisponible <= $salario) {
                         $errors['salario'] = 'El Club no tiene presupuesto suficiente. Presupuesto disponible: ' . $presupuestoDisponible;
                     }else{
                         $coach->setSalario($salario);
