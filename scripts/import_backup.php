@@ -17,8 +17,8 @@ if ($sql === false) {
 // Conexión al servidor MySQL (ajusta si usas credenciales distintas)
 $host = '127.0.0.1';
 $port = 3306;
-$user = 'root';
-$pass = '';
+$user = 'futboluser';
+$pass = 'Futbol_2025';
 
 try {
     // Conectar sin DB para poder ejecutar CREATE DATABASE y USE
