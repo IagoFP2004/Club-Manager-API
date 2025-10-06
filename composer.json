@@ -15,6 +15,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.5",
         "knplabs/knp-paginator-bundle": "^6.9",
+        "lexik/jwt-authentication-bundle": "^3.1",
         "nelmio/api-doc-bundle": "^4.33",
         "phpmailer/phpmailer": "^6.10",
         "symfony/asset": "7.0.*",
