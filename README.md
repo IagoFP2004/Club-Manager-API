@@ -180,12 +180,13 @@ curl -X POST http://localhost:8000/clubs \
 
 ### Códigos de Estado HTTP
 
-| Código | Descripción |
-|--------|-------------|
-| `200` | OK - Operación exitosa |
-| `400` | Bad Request - Datos inválidos o faltantes |
-| `404` | Not Found - Recurso no encontrado |
-| `500` | Internal Server Error - Error del servidor |
+| Código | Descripción                                |
+|--------|--------------------------------------------|
+| `200`  | OK - Operación exitosa                     |
+| `400`  | Bad Request - Datos inválidos o faltantes  |
+| `401`  | JWT Token not found - Token no encontrado  |
+| `404`  | Not Found - Recurso no encontrado          |
+| `500`  | Internal Server Error - Error del servidor |
 
 ### Formato de Respuestas de Error
 
