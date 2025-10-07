@@ -14,23 +14,23 @@ security:
       security: false
 
     login:
-      pattern: ^/api/login_check$
+      pattern: ^/login$
       stateless: true
       json_login:
-        check_path: /api/login_check
+        check_path: /login
         username_path: email
         password_path: password
         success_handler: lexik_jwt_authentication.handler.authentication_success
         failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
     api:
-      pattern: ^/api
+      pattern: ^/
       stateless: true
       jwt: ~
 
   access_control:
-    - { path: ^/api/login_check$, roles: PUBLIC_ACCESS }
-    - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+    - { path: ^/login$, roles: PUBLIC_ACCESS }
+    - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
   security:

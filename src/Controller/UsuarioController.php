@@ -34,7 +34,7 @@ class UsuarioController extends AbstractController
     {
         return $texto !== ltrim($texto);
     }
-
+/**
     #[Route('/api/{email}', name: 'api_email', methods: ['GET'])]
     public function getByEmail(EntityManagerInterface $entityManager, $email): Response
     {
@@ -51,7 +51,7 @@ class UsuarioController extends AbstractController
         ];
         return $this->json($data);
     }
-
+**/
     #[Route('/register', name: 'register', methods: ['POST'])]
     public function register(EntityManagerInterface $entityManager, Request $request):Response
     {
@@ -102,6 +102,6 @@ class UsuarioController extends AbstractController
         $entityManager->persist($user);
         $entityManager->flush();
 
-        return $this->json(['message' => 'Usuario registrado'], 201);
+        return $this->json(['message' => 'Usuario creado'], 201);
     }
 }

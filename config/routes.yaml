@@ -15,4 +15,5 @@ app.swagger:
     defaults: { _controller: nelmio_api_doc.controller.swagger:jsonAction }
 
 api_login_check:
-  path: /api/login_check
+  path: /login
+  methods: POST
