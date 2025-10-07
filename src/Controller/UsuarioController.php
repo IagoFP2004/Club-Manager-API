@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 use App\Entity\User;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\Request;
@@ -88,13 +89,15 @@ class UsuarioController extends AbstractController
             $errors['email'] = "El email es requerido";
         }else if (!filter_var($email, FILTER_VALIDATE_EMAIL)){
             $errors['email'] = "El email no es valido";
+        }else if ($this->getByEmail($entityManager,$email)){
+            $errors['email'] = "El email ya existe";
         }
 
         //Validacion del campo password
         if (empty($password)){
             $errors['password'] = "El password es requerido";
-        }else if (strlen($password) < 8){
-            $errors['password'] = "El password debe tener al menos 8 caracteres";
+        }else if ( strlen($password) < 4 || strlen($password) > 8){
+            $errors['password'] = "El password debe tener al menos 4 caracteres y menos de 8";
         }
 
         if(!empty($errors)){
@@ -111,4 +114,11 @@ class UsuarioController extends AbstractController
 
         return $this->json(['message' => 'Usuario creado'], 201);
     }
+
+    public function getByEmail(EntityManager $entityManager, string $email): bool
+    {
+        $user = $entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
+        return (bool) $user;
+    }
+
 }
