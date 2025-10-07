@@ -4,11 +4,37 @@ namespace App\Controller;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+
 class UsuarioController extends AbstractController
 {
+    public const ESPECIAL_CHARS = [',', '.', ';', ':', '!', '?', '¡', '¿', '"', "'", '-', '_', '+', '#', '$', '%', '&', '/', '(', ')', '=', '*', '^', '~', '`', '{', '}', '[', ']', '|', '\\', '@','<','>'];
+
+    /**
+     * Verifica si un string contiene caracteres especiales prohibidos
+     */
+    private function contieneCaracteresEspeciales(string $texto): bool
+    {
+        foreach(self::ESPECIAL_CHARS as $caracter){
+            if(str_contains($texto, $caracter)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Verifica si un string tiene espacios en blanco al inicio
+     */
+    private function tieneEspaciosAlInicio(string $texto): bool
+    {
+        return $texto !== ltrim($texto);
+    }
+
     #[Route('/api/{email}', name: 'api_email', methods: ['GET'])]
     public function getByEmail(EntityManagerInterface $entityManager, $email): Response
     {
@@ -24,5 +50,58 @@ class UsuarioController extends AbstractController
             'email' => $user->getEmail(),
         ];
         return $this->json($data);
+    }
+
+    #[Route('/register', name: 'register', methods: ['POST'])]
+    public function register(EntityManagerInterface $entityManager, Request $request):Response
+    {
+        $errors = [];
+
+        $body = $request->getContent();
+        $jsonData = json_decode($body, true);
+
+        if(!$jsonData){
+           $errors['json'] = "El JSON no es valido";
+        }
+
+        $nombre = $jsonData['nombre'];
+        $email = $jsonData['email'];
+        $password = $jsonData['password'];
+
+        //Validacion del campo nombre
+        if (empty($nombre)){
+            $errors['nombre'] = "El nombre es requerido";
+        }else if (!is_string($nombre)){
+            $errors['nombre'] = "El nombre debe ser un string";
+        }else if ($this->contieneCaracteresEspeciales($nombre)){
+            $errors['nombre'] = "El nombre no puede contener caracteres especiales";
+        }else if ($this->tieneEspaciosAlInicio($nombre)){
+            $errors['nombre'] = "El nombre no puede contener caracteres especiales";
+        }else if (strlen($nombre) < 3){
+            $errors['nombre'] = "El nombre debe tener al menos 3 caracteres";
+        }else if(preg_match('/\d/', $nombre)){
+            $errors['nombre'] = "El nombre no puede contener numeros";
+        }
+
+        //Validacion del campo email
+        if (empty($email)){
+            $errors['email'] = "El email es requerido";
+        }else if (!filter_var($email, FILTER_VALIDATE_EMAIL)){
+            $errors['email'] = "El email no es valido";
+        }
+
+        if(!empty($errors)){
+            return $this->json($errors, 400);
+        }
+
+        $user = new User();
+        $user->setNombre($nombre);
+        $user->setEmail($email);
+        $user->setPassword(password_hash($password, PASSWORD_DEFAULT));
+
+        $entityManager->persist($user);
+        $entityManager->flush();
+
+        return $this->json(['message' => 'Usuario registrado'], 201);
     }
 }
