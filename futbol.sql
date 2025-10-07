@@ -109,6 +109,6 @@ VALUES ('11223344C', 'Diego', 'Simeone', 30000000, (SELECT id FROM club WHERE id
 
 -- Insertar usuarios de ejemplo
 INSERT INTO user (nombre, email, pass)
-VALUES ('Administrador', 'admin@futbol.com', 'admin123'),
-       ('Iago Francisco', 'iago@futbol.com', 'claveSegura'),
-       ('Usuario Demo', 'demo@futbol.com', 'demo123');
+VALUES('Administrador', 'admin@futbol.com', 'pbkdf2_sha256$200000$4ba32d43b20ffadebff7f3ba55c6b884$ca304b59c58b0d0353fdcf0b0decb0515d7875be0b866846bc2023cd059849f0'),
+      ('test', 'test@futbol.com', 'pbkdf2_sha256$200000$fc03e47b0439cf216b0784cf32a6bd85$202622edfb7128a3da105df4398982acfea38d57008a5068f6eeb4fbc61399b4');
+

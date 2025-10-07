@@ -108,6 +108,25 @@ symfony server:start
 | `PUT` | `/coaches/{id}` | Actualizar entrenador |
 | `DELETE` | `/coaches/{id}` | Eliminar entrenador |
 
+### Usuarios (User)
+| Método | Endpoint        | Descripción                                              |
+|--------|-----------------|----------------------------------------------------------|
+| `POST` | `/login`        | Iniciar sesion con `email` y `password`                  |
+| `POST` | `/alta/register` | Dar de alta un usuario (Sin necesidad de estar logueado) |
+
+
+Para poder hacer una consulta a los endpoints deberas estar logueado, en la ruta `/login` seran necesarios los campos `email` y `password`, si los datos son correctos recibiras un estado `200` y el `token` que sera necesario para poder trabajar con los endpoints, en caso contrario recibirar un error con la cauda del fallo.
+
+### Datos acceso usuarios
+| email | password        
+|----|-----------------
+| `admin@futbol.com` | `admin123`    
+|`test@futbol.com`| `test123`
+
+* Nota: Las contraseñas estaran hasheadas y cuando se haga login se compararán las originales con el hash usando los metodos que el lenguaje ya nos facilita
+
+
+
 ### Ejemplos de uso
 
 #### Crear un jugador
@@ -497,18 +516,38 @@ El proyecto incluye una suite completa de tests unitarios, funcionales e integra
 
 ## Configuración de Tests
 
-### Base de Datos de Test
-Los tests utilizan una base de datos separada (`futbol_test`) para no interferir con los datos de producción:
+### Paso 1: Crear Base de Datos de Test
+Los tests utilizan una base de datos separada (`futbol_test`) para no interferir con los datos de desarrollo/producción.
 
+**Opción A - Con usuario root:**
 ```bash
-# Crear base de datos de test (si no existe)
-mysql -u root -e "CREATE DATABASE IF NOT EXISTS futbol_test;"
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS futbol_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p -e "GRANT ALL PRIVILEGES ON futbol_test.* TO 'futboluser'@'localhost'; FLUSH PRIVILEGES;"
 ```
 
-### Variables de Entorno para Test
-El archivo `.env.test` debe contener:
-```env
-DATABASE_URL="mysql://root:@127.0.0.1:3306/futbol?serverVersion=8.0.32&charset=utf8mb4"
+**Opción B - Con usuario con privilegios:**
+```sql
+CREATE DATABASE IF NOT EXISTS futbol_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+GRANT ALL PRIVILEGES ON futbol_test.* TO 'futboluser'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+### Paso 2: Configurar Variables de Entorno
+El archivo `config/packages/test/doctrine.yaml` debe apuntar a la base de datos de test:
+
+```yaml
+doctrine:
+    dbal:
+        url: 'mysql://futboluser:Futbol_2025@127.0.0.1:3306/futbol_test?serverVersion=8.0.32&charset=utf8mb4'
+```
+
+### Paso 3: Crear el Esquema de Base de Datos de Test
+```bash
+# Crear todas las tablas en la base de datos de test
+php bin/console doctrine:schema:create --env=test
+
+# O usar migraciones
+php bin/console doctrine:migrations:migrate --env=test --no-interaction
 ```
 
 ## Ejecutar Tests
@@ -518,10 +557,25 @@ DATABASE_URL="mysql://root:@127.0.0.1:3306/futbol?serverVersion=8.0.32&charset=u
 php bin/phpunit
 ```
 
+### Ejecutar tests con más información
+```bash
+# Con formato detallado
+php bin/phpunit --testdox
+
+# Con cobertura de código (requiere Xdebug)
+php bin/phpunit --coverage-html coverage/
+```
+
 ### Ejecutar tests específicos
 ```bash
 # Tests de controladores
 php bin/phpunit tests/Controller/
+
+# Tests de un controlador específico
+php bin/phpunit tests/Controller/PlayerControllerTest.php
+php bin/phpunit tests/Controller/ClubControllerTest.php
+php bin/phpunit tests/Controller/CoachControllerTest.php
+php bin/phpunit tests/Controller/UserControllerTest.php
 
 # Tests funcionales
 php bin/phpunit tests/Functional/
@@ -529,8 +583,48 @@ php bin/phpunit tests/Functional/
 # Tests de integración
 php bin/phpunit tests/Integration/
 
-# Test específico
+# Test específico por nombre
 php bin/phpunit --filter testCreateClub
+php bin/phpunit --filter testCreatePlayer
+```
+
+## Estructura de Tests
+
+### Tests de Controladores
+- `ClubControllerTest.php` - Tests para endpoints de clubs
+- `PlayerControllerTest.php` - Tests para endpoints de jugadores  
+- `CoachControllerTest.php` - Tests para endpoints de entrenadores
+- `UserControllerTest.php` - Tests para registro de usuarios
+
+### Tests Funcionales
+- `BudgetValidationTest.php` - Tests de validación de presupuestos
+
+### Tests de Integración
+- `DatabaseIntegrationTest.php` - Tests de integración con la base de datos
+
+## Solución de Problemas Comunes
+
+### Error: "Access denied for user to database futbol_test"
+**Causa:** El usuario no tiene permisos en la base de datos de test.
+
+**Solución:**
+```bash
+mysql -u root -p -e "GRANT ALL PRIVILEGES ON futbol_test.* TO 'futboluser'@'localhost'; FLUSH PRIVILEGES;"
+```
+
+### Error: "Table doesn't exist"
+**Causa:** El esquema de la base de datos de test no está creado.
+
+**Solución:**
+```bash
+php bin/console doctrine:schema:create --env=test
+```
+
+### Limpiar base de datos de test entre ejecuciones
+```bash
+# Eliminar y recrear el esquema
+php bin/console doctrine:schema:drop --env=test --force
+php bin/console doctrine:schema:create --env=test
 ```
 
 

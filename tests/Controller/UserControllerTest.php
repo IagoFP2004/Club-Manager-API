@@ -9,7 +9,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class UserControllerTest extends WebTestCase
 {
-    /**@runInSeparateProcess*/
     public function testCreateUser(): void
     {
         $client = static::createClient();
