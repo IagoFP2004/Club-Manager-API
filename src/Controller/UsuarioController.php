@@ -90,6 +90,13 @@ class UsuarioController extends AbstractController
             $errors['email'] = "El email no es valido";
         }
 
+        //Validacion del campo password
+        if (empty($password)){
+            $errors['password'] = "El password es requerido";
+        }else if (strlen($password) < 8){
+            $errors['password'] = "El password debe tener al menos 8 caracteres";
+        }
+
         if(!empty($errors)){
             return $this->json($errors, 400);
         }
