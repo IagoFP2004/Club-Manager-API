@@ -518,69 +518,114 @@
 					"name": "POST",
 					"item": [
 						{
-							"name": "Login (POST-RAW-JSON)",
-							"request": {
-								"auth": {
-									"type": "bearer",
-									"bearer": [
-										{
-											"key": "token",
-											"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NTk4MzI0NzYsImV4cCI6MTc1OTgzNjA3Niwicm9sZXMiOlsiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoidG9tYXNAZ21haWwuY29tIn0.GU3jr4RlpRx8yvfIw55L0enALFm8GqpL_jN3DQWeRRCBKjPD3JL2nuXnSHvYrRVwow8CH5jn3TSOmNuObOYE9zcSM2j9hChYStaKzd778gtPnGm-Ik9vPErcF8QrD-otdgfA1VmHFK3WmXoC3D_gtbqi4SUrSO8RAKsIxiWlFUaBg9rNXutDlBdo9vk_aXVab9WRkFCuJO2-twk30WySmZONOn0r8T1gCuKows2UXSw8Nl0nSivZ0RR0prJC849UhEhtBS3MAOhLVBoh9p1qe-NTVXXpos4-ymOl6YG5DoLU4QXU6c2iIkaoPk3WjQwjUvslHpdvkDlzHNez1fCcTA",
-											"type": "string"
+							"name": "GET",
+							"item": [
+								{
+									"name": "Get-User (GET)",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NTk5MDc4NDQsImV4cCI6MTc1OTkxMTQ0NCwicm9sZXMiOlsiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoidG9tYXNAZ21haWwuY29tIn0.ByZpbZkWRDSx8SGrpxaOVez_Sr0UJtF28qO3jPevpC1VE6EnxGrZAv1svcoi4QW7Qlw2ShhSiT_sI8JrXSU3camZ3IMtyVDqznud_aF75TG9LrvnsSeeFKx2HypOUYQ7UxTdzA0Wd361H-Sj6bh4dsw1ixqFuQ7CKcc7KLUe_qxe7RH3mUDKs1bIM7GY6w6K1Mkq8Q7HVbmbCEHuDmWdiFzkkEfbPK8VMDaAsf-HyUC3YYvWpueP7MmcE68JMnH_MEHJxHWPSWSS5g4Hz-vBD6xnIe6F8vShVpztiLeMDOUghp2s8bE3M5eV4CaalwrfAS-yglaGHszO784DTjt4iA",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"nombre\": \"Prueba\",\n    \"email\": \"tomas@gmail.com\",\n    \"password\": \"test\"\n}"
+										},
+										"url": {
+											"raw": "{{baseURL}}/user/me",
+											"host": [
+												"{{baseURL}}"
+											],
+											"path": [
+												"user",
+												"me"
+											]
 										}
-									]
-								},
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"tomas@gmail.com\",\n    \"password\": \"abc123\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "http://api.clubmanager.com/login",
-									"protocol": "http",
-									"host": [
-										"api",
-										"clubmanager",
-										"com"
-									],
-									"path": [
-										"login"
-									]
+									},
+									"response": []
 								}
-							},
-							"response": []
+							]
 						},
 						{
-							"name": "Register-User (POST-RAW-JSON))",
-							"request": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"nombre\": \"Prueba\",\n    \"email\": \"tomas@gmail.com\",\n    \"password\": \"test\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
+							"name": "POST",
+							"item": [
+								{
+									"name": "Login (POST-RAW-JSON)",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NTk4MzI0NzYsImV4cCI6MTc1OTgzNjA3Niwicm9sZXMiOlsiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoidG9tYXNAZ21haWwuY29tIn0.GU3jr4RlpRx8yvfIw55L0enALFm8GqpL_jN3DQWeRRCBKjPD3JL2nuXnSHvYrRVwow8CH5jn3TSOmNuObOYE9zcSM2j9hChYStaKzd778gtPnGm-Ik9vPErcF8QrD-otdgfA1VmHFK3WmXoC3D_gtbqi4SUrSO8RAKsIxiWlFUaBg9rNXutDlBdo9vk_aXVab9WRkFCuJO2-twk30WySmZONOn0r8T1gCuKows2UXSw8Nl0nSivZ0RR0prJC849UhEhtBS3MAOhLVBoh9p1qe-NTVXXpos4-ymOl6YG5DoLU4QXU6c2iIkaoPk3WjQwjUvslHpdvkDlzHNez1fCcTA",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"email\": \"tomas@gmail.com\",\n    \"password\": \"abc123\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://api.clubmanager.com/login",
+											"protocol": "http",
+											"host": [
+												"api",
+												"clubmanager",
+												"com"
+											],
+											"path": [
+												"login"
+											]
 										}
-									}
+									},
+									"response": []
 								},
-								"url": {
-									"raw": "{{baseURL}}/register",
-									"host": [
-										"{{baseURL}}"
-									],
-									"path": [
-										"register"
-									]
+								{
+									"name": "Register-User (POST-RAW-JSON))",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"nombre\": \"Prueba\",\n    \"email\": \"tomas@gmail.com\",\n    \"password\": \"test\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseURL}}/register",
+											"host": [
+												"{{baseURL}}"
+											],
+											"path": [
+												"register"
+											]
+										}
+									},
+									"response": []
 								}
-							},
-							"response": []
+							]
 						}
 					]
 				}
