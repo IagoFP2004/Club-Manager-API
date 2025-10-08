@@ -109,11 +109,11 @@ symfony server:start
 | `DELETE` | `/coaches/{id}` | Eliminar entrenador |
 
 ### Usuarios (User)
-| Método | Endpoint        | Descripción                                              |
-|--------|-----------------|----------------------------------------------------------|
-| `POST` | `/login`        | Iniciar sesion con `email` y `password`                  |
-| `POST` | `/alta/register` | Dar de alta un usuario (Sin necesidad de estar logueado) |
-
+| Método | Endpoint    | Descripción                                              |
+|--------|-------------|----------------------------------------------------------|
+| `POST` | `/login`    | Iniciar sesion con `email` y `password`                  |
+| `POST` | `/register` | Dar de alta un usuario (Sin necesidad de estar logueado) |
+| `GET` | `/user/me`  | Obtener informacion de un usuario que esta logueado      |
 
 Para poder hacer una consulta a los endpoints deberas estar logueado, en la ruta `/login` seran necesarios los campos `email` y `password`, si los datos son correctos recibiras un estado `200` y el `token` que sera necesario para poder trabajar con los endpoints, en caso contrario recibirar un error con la cauda del fallo.
 
