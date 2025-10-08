@@ -278,7 +278,7 @@ class UserControllerTest extends WebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-                'nombre' => '',
+                'nombre' => 'UserTest',
                 'email' => $email,
                 'password' => '',
             ]),JSON_THROW_ON_ERROR
@@ -290,6 +290,57 @@ class UserControllerTest extends WebTestCase
         $data = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertArrayHasKey('password', $data);
         $this->assertSame('El password es requerido', $data['password']);
+    }
 
+    public function testCreateUserShortPasswordError():void
+    {
+        $email = 'usuario+'.bin2hex(random_bytes(4)).'@test.local';
+
+        $client = static::createClient();
+        $client->request(
+            'POST',
+            '/register',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'nombre' => 'UserTest',
+                'email' => $email,
+                'password' => 'abc',
+            ]),JSON_THROW_ON_ERROR
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
+
+        $data = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertArrayHasKey('password', $data);
+        $this->assertSame('El password debe tener al menos 4 caracteres y menos de 8', $data['password']);
+    }
+
+    public function testCreateUserLongtPasswordError():void
+    {
+        $email = 'usuario+'.bin2hex(random_bytes(4)).'@test.local';
+
+        $client = static::createClient();
+        $client->request(
+            'POST',
+            '/register',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'nombre' => 'UserTest',
+                'email' => $email,
+                'password' => 'abcd1234.',
+            ]),JSON_THROW_ON_ERROR
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
+
+        $data = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertArrayHasKey('password', $data);
+        $this->assertSame('El password debe tener al menos 4 caracteres y menos de 8', $data['password']);
     }
 }
