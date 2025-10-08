@@ -33,24 +33,7 @@ class UsuarioController extends AbstractController
     {
         return $texto !== ltrim($texto);
     }
-/**
-    #[Route('/api/{email}', name: 'api_email', methods: ['GET'])]
-    public function getByEmail(EntityManagerInterface $entityManager, $email): Response
-    {
-        $user = $entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
 
-        if (!$user) {
-            return $this->json(['message' => 'User not found'], 404);
-        }
-
-        $data = [
-            'id' => $user->getId(),
-            'nombres' => $user->getNombre(),
-            'email' => $user->getEmail(),
-        ];
-        return $this->json($data);
-    }
-**/
     #[Route('/register', name: 'register', methods: ['POST'])]
     public function register(EntityManagerInterface $entityManager, Request $request):Response
     {

@@ -2,47 +2,117 @@
 
 namespace App\Tests\Controller;
 
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\HttpFoundation\Response;
+
 
 class UserControllerTest extends WebTestCase
 {
-    public function testCreateUser(): void
+    public function testCreateUser():void
     {
+        $email = 'usuario+'.bin2hex(random_bytes(4)).'@test.local';
+
         $client = static::createClient();
-        $client->catchExceptions(false); // <- muestra la excepción real si hay 500
-
-        $userData = [
-            'nombre' => 'John Doe',
-            'email' => 'jd'.uniqid().'@example.com', // evita colisiones si hay unique
-            'password' => 'abc123',
-        ];
-
         $client->request(
             'POST',
             '/register',
-            server: [
-                'CONTENT_TYPE' => 'application/json',
-                'HTTP_ACCEPT'  => 'application/json',
-            ],
-            content: json_encode($userData, JSON_THROW_ON_ERROR)
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'nombre' => 'UsuarioTest',
+                'email' => $email,
+                'password' => 'test123',
+            ])
         );
 
-        $response = $client->getResponse();
-        $content = $response->getContent();
+        //Verificamos si la respuesta da 201 (creado)
+        $this->assertResponseStatusCodeSame(201);
 
-        if ($response->getStatusCode() !== Response::HTTP_CREATED) {
-            echo "\nDEBUG BODY:\n".$content."\n";
-        }
+        //Verficar que el header sea JSON
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
 
-        $this->assertSame(Response::HTTP_CREATED, $response->getStatusCode(), $content);
-        $this->assertJson($content);
+        //Descodificamos el body
+        $data = json_decode($client->getResponse()->getContent(), true);
 
-        $data = json_decode($content, true);
-        $this->assertIsArray($data);
         $this->assertArrayHasKey('message', $data);
         $this->assertSame('Usuario creado', $data['message']);
+    }
+
+    public function testCreateUserEmptyNameError():void
+    {
+        $email = 'usuario+'.bin2hex(random_bytes(4)).'@test.local';
+
+        $client = static::createClient();
+        $client->request(
+            'POST',
+            '/register',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'nombre' => '',
+                'email' => $email,
+                'password' => 'test123',
+            ]),JSON_THROW_ON_ERROR
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
+
+        $data = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertArrayHasKey('nombre', $data);
+        $this->assertSame('El nombre es requerido', $data['nombre']);
+
+    }
+
+    public function testCreateUserEmptyEmailError():void
+    {
+        $client = static::createClient();
+        $client->request(
+            'POST',
+            '/register',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'nombre' => 'UsuarioTest',
+                'email' => '',
+                'password' => 'test123',
+            ]),JSON_THROW_ON_ERROR
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
+
+        $data = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertArrayHasKey('email', $data);
+        $this->assertSame('El email es requerido', $data['email']);
+    }
+
+    public function testCreateUserEmptyPasswordError():void
+    {
+        $email = 'usuario+'.bin2hex(random_bytes(4)).'@test.local';
+
+        $client = static::createClient();
+        $client->request(
+            'POST',
+            '/register',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'nombre' => '',
+                'email' => $email,
+                'password' => '',
+            ]),JSON_THROW_ON_ERROR
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
+
+        $data = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertArrayHasKey('password', $data);
+        $this->assertSame('El password es requerido', $data['password']);
+
     }
 }

@@ -24,10 +24,13 @@ doctrine:
                 alias: App
 
 when@test:
-    doctrine:
-        dbal:
-            # Use separate test database
-            url: 'mysql://root:@127.0.0.1:3306/futbol_test?serverVersion=8.0.32&charset=utf8mb4'
+  doctrine:
+    dbal:
+      driver: 'pdo_sqlite'
+      url: '%env(resolve:DATABASE_URL)%'
+      # Alternativa explícita sin env:
+      # path: '%kernel.project_dir%/var/data_test.sqlite'
+
 
 when@prod:
     doctrine:

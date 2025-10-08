@@ -22,6 +22,4 @@ class UserTest extends TestCase
         $this->assertIsArray($user->getRoles());
         $this->assertContains('ROLE_USER', $user->getRoles());
     }
-
-
 }
