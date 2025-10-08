@@ -9,8 +9,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
-
 class UsuarioController extends AbstractController
 {
     public const ESPECIAL_CHARS = [',', '.', ';', ':', '!', '?', '¡', '¿', '"', "'", '-', '_', '+', '#', '$', '%', '&', '/', '(', ')', '=', '*', '^', '~', '`', '{', '}', '[', ']', '|', '\\', '@','<','>'];
@@ -69,7 +67,7 @@ class UsuarioController extends AbstractController
         $email = $jsonData['email'];
         $password = $jsonData['password'];
 
-        //Validacion del campo nombre
+        //Validacion del campo de nombre
         if (empty($nombre)){
             $errors['nombre'] = "El nombre es requerido";
         }else if (!is_string($nombre)){
@@ -113,6 +111,23 @@ class UsuarioController extends AbstractController
         $entityManager->flush();
 
         return $this->json(['message' => 'Usuario creado'], 201);
+    }
+
+    #[Route('/user/me', name: 'user_me', methods: ['GET'])]
+    public function getinfoUser(): Response
+    {
+        $user = $this->getUser();
+
+        if (!$user){
+            return $this->json(['message' => 'Usuario no encontrado'], 400);
+        }
+
+        return $this->json([
+            'id' => $user->getId(),
+            'nombre' => $user->getNombre(),
+            'email' => $user->getEmail(),
+        ], 200);
+
     }
 
     public function getByEmail(EntityManager $entityManager, string $email): bool
