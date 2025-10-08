@@ -3,6 +3,7 @@
 namespace App\Tests\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use App\Entity\User;
 
 
 class UserControllerTest extends WebTestCase
@@ -194,6 +195,75 @@ class UserControllerTest extends WebTestCase
         $this->assertArrayHasKey('email', $data);
         $this->assertSame('El email es requerido', $data['email']);
     }
+
+    public function testCreateUserInvalidEmailError():void
+    {
+        $email = 'usuario+'.bin2hex(random_bytes(4)).'test.local';
+
+        $client = static::createClient();
+        $client->request(
+            'POST',
+            '/register',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'nombre' => 'UsuarioTest',
+                'email' => $email,
+                'password' => 'test123',
+            ]),JSON_THROW_ON_ERROR
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
+
+        $data = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertArrayHasKey('email', $data);
+        $this->assertSame('El email no es valido', $data['email']);
+    }
+
+    public function testCreateUserDuplicateEmailError(): void
+    {
+        $client = static::createClient();
+        $email = 'test+'.bin2hex(random_bytes(3)).'@prueba.com'; // evita colisiones entre ejecuciones
+
+        // 1) Crear el usuario
+        $client->request(
+            'POST',
+            '/register',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'nombre'   => 'UsuarioTest',
+                'email'    => $email,
+                'password' => 'test12',
+            ], JSON_THROW_ON_ERROR)
+        );
+        $this->assertResponseStatusCodeSame(201);
+
+        // 2) Intentar crearlo de nuevo con el MISMO email
+        $client->request(
+            'POST',
+            '/register',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'nombre'   => 'UsuarioTest',
+                'email'    => $email,
+                'password' => 'test12',
+            ], JSON_THROW_ON_ERROR)
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+        $this->assertResponseHeaderSame('content-type', 'application/json');
+
+        $data = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertArrayHasKey('email', $data);
+        $this->assertSame('El email ya existe', $data['email']);
+    }
+
 
     //Test del campo de password
     public function testCreateUserEmptyPasswordError():void
