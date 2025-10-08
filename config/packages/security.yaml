@@ -29,6 +29,7 @@ security:
       jwt: ~
 
   access_control:
+    - { path: ^/, roles: PUBLIC_ACCESS, methods: [ OPTIONS ] }
     - { path: ^/login$, roles: PUBLIC_ACCESS }
     - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
     - { path: ^/user/me, roles: IS_AUTHENTICATED_FULLY }

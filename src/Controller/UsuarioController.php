@@ -58,7 +58,7 @@ class UsuarioController extends AbstractController
         }else if ($this->contieneCaracteresEspeciales($nombre)){
             $errors['nombre'] = "El nombre no puede contener caracteres especiales";
         }else if ($this->tieneEspaciosAlInicio($nombre)){
-            $errors['nombre'] = "El nombre no puede contener caracteres especiales";
+            $errors['nombre'] = "El nombre no puede comenzar por espacios";
         }else if (strlen($nombre) < 3){
             $errors['nombre'] = "El nombre debe tener al menos 3 caracteres";
         }else if(preg_match('/\d/', $nombre)){
