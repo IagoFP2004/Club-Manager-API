@@ -81,6 +81,12 @@
         ],
         "seed-db": [
             "php bin/console doctrine:fixtures:load --no-interaction"
+        ],
+        "test": [
+            "php bin/phpunit --testdox"
+        ],
+        "test-user": [
+            "php bin/phpunit tests/Controller/UserControllerTest.php --testdox"
         ]
     },
     "conflict": {
