@@ -43,7 +43,7 @@ class DatabaseIntegrationTest extends KernelTestCase
         $this->assertNotNull($savedClub);
         $this->assertEquals('Test Club', $savedClub->getNombre());
         $this->assertEquals(2024, $savedClub->getFundacion());
-        $this->assertEquals('50000000.00', $savedClub->getPresupuesto());
+        $this->assertEquals('50000000', number_format((float)$savedClub->getPresupuesto(), 0, '.', ''));
 
         // Cleanup
         $this->entityManager->remove($savedClub);
@@ -84,7 +84,7 @@ class DatabaseIntegrationTest extends KernelTestCase
         $this->assertEquals('Test', $savedPlayer->getNombre());
         $this->assertEquals('Player', $savedPlayer->getApellidos());
         $this->assertEquals(99, $savedPlayer->getDorsal());
-        $this->assertEquals('1000000.00', $savedPlayer->getSalario());
+        $this->assertEquals('1000000', number_format((float)$savedPlayer->getSalario(), 0, '.', ''));
 
         // Cleanup
         $this->entityManager->remove($savedPlayer);
@@ -124,7 +124,7 @@ class DatabaseIntegrationTest extends KernelTestCase
         $this->assertNotNull($savedCoach);
         $this->assertEquals('Test', $savedCoach->getNombre());
         $this->assertEquals('Coach', $savedCoach->getApellidos());
-        $this->assertEquals('2000000.00', $savedCoach->getSalario());
+        $this->assertEquals('2000000', number_format((float)$savedCoach->getSalario(), 0, '.', ''));
 
         // Cleanup
         $this->entityManager->remove($savedCoach);

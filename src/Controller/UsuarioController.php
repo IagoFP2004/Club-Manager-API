@@ -113,6 +113,7 @@ class UsuarioController extends AbstractController
 
     }
 
+    //Funcion que usaremos para verificar si un email existe a la hora de registrar un nuevo email, de esta manera no existiran duplicados
     public function getByEmail(EntityManager $entityManager, string $email): bool
     {
         $user = $entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
